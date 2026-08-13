@@ -149,13 +149,50 @@ model Frame {
 
 // An article saved to the daily room's shelf. `favorite` lifts it into the
 // "special pile" — the reads worth keeping.
+//
+// `blocks` is the readable body pulled in from the source and cached so it can
+// be read (and highlighted) here in the house: an ordered array of
+// { t, s } chunks — see app/lib/article.ts. Null until it's been pulled in.
 model Bookmark {
-  id        String   @id @default(cuid())
-  url       String   @unique
+  id        String    @id @default(cuid())
+  url       String    @unique
   title     String
-  source    String   @default("")
-  favorite  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  source    String    @default("")
+  favorite  Boolean   @default(false)
+  // Which shelf it sits on — freeform, made up as you go. "" is the catch-all
+  // shelf everything lands on until it's put somewhere.
+  shelf     String    @default("")
+  byline    String    @default("")
+  blocks    Json?
+  wordCount Int       @default(0)
+  fetchedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  highlights Highlight[]
+}
+
+// A passage marked up while reading an article in the house — the point being
+// to separate what actually landed from what only looked like it did.
+// `grasp` is "got" | "half" | "lost"; the half/lost ones pile up into the
+// daily room's "what I don't get yet" list.
+//
+// Anchored by block index + character range, with the quote kept alongside so
+// a highlight can find itself again if the article is pulled in afresh.
+model Highlight {
+  id         String   @id @default(cuid())
+  bookmarkId String
+  block      Int
+  start      Int
+  end        Int
+  quote      String
+  grasp      String
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bookmark Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+
+  @@index([bookmarkId])
 }
 
 // A single page view by a visitor (never the owner). Location is coarse
@@ -190,21 +227,60 @@ model Roadmap {
 
 // One chunk of a roadmap: read/learn it, self-test, tick it off. `done` is the
 // owner's own progress (single-owner site). Advances only when marked done.
+//
+// `confidence` is a separate axis from `done`: having been through a pattern
+// isn't the same as being able to write it cold. 0 unrated, 1 lost, 2 shaky,
+// 3 solid — it feeds the DSA roadmap's strong/weak board.
 model RoadmapStep {
-  id        String  @id @default(cuid())
-  roadmapId String
-  order     Int
-  group     String  @default("") // section header, e.g. "Ch 2" or "Scaling"
-  title     String
-  detail    String  @default("")
-  link      String?
-  recallQ   String  @default("")
-  recallA   String  @default("")
-  done      Boolean @default(false)
+  id         String  @id @default(cuid())
+  roadmapId  String
+  order      Int
+  group      String  @default("") // section header, e.g. "Ch 2" or "Scaling"
+  title      String
+  detail     String  @default("")
+  link       String?
+  recallQ    String  @default("")
+  recallA    String  @default("")
+  done       Boolean @default(false)
+  confidence Int     @default(0)
 
   roadmap Roadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
 
   @@index([roadmapId])
+}
+
+// One LeetCode problem drilled for a DSA pattern, and how it went: "solved"
+// (came out on its own) or "struggled" (needed the answer, or crawled).
+// `pattern` is the RoadmapStep title it was drilled under, which is how the
+// strong/weak board groups them.
+model ProblemLog {
+  id      String @id @default(cuid())
+  url     String @unique
+  name    String
+  pattern String
+  status  String // "solved" | "struggled"
+  // True when it came from the LeetCode sync rather than being ticked by
+  // hand. A hand-set verdict is never overwritten by the sync — "I struggled
+  // with this" is the honest signal, and eventually solving it doesn't undo
+  // that.
+  auto Boolean @default(false)
+  // How hard it felt, your scale: 1 brutal → 5 easy. 0 means unrated.
+  // Separate from LeetCode's own easy/medium/hard, which says nothing about
+  // whether *you* could see it.
+  rating    Int      @default(0)
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pattern])
+}
+
+// Small bits of house configuration that want a UI rather than a redeploy —
+// currently just the LeetCode username the DSA board syncs from.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 // One tick per habit per day — powers the daily room's streak board.
