@@ -69,7 +69,7 @@ export default async function Hallway({
           This is a safe space for me to build, explore, and write.
         </p>
         <p className="text-ink-soft/90 mt-4 max-w-xl leading-relaxed">
-          I&apos;m a Computer Science student at the University of Edinburgh who
+          Hiii I&apos;m a Computer Science student at the University of Edinburgh who
           loves to challenge myself and learn. Between a part-time job, uni,
           picking up new skills, and whatever side quest I&apos;m on, life gets
           pretty full, so I built this not just to show my work but to track my
