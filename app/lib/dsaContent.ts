@@ -33,7 +33,10 @@ while l < r:
     problems: [
       { name: "Valid Palindrome", url: lc("valid-palindrome") },
       { name: "3Sum", url: lc("3sum") },
-      { name: "Container With Most Water", url: lc("container-with-most-water") },
+      {
+        name: "Container With Most Water",
+        url: lc("container-with-most-water"),
+      },
     ],
   },
   "Sliding window": {
@@ -45,9 +48,18 @@ for r in range(len(s)):
         remove(s[l]); l += 1
     best = max(best, r - l + 1)`,
     problems: [
-      { name: "Best Time to Buy/Sell Stock", url: lc("best-time-to-buy-and-sell-stock") },
-      { name: "Longest Substring w/o Repeat", url: lc("longest-substring-without-repeating-characters") },
-      { name: "Longest Repeating Char Replace", url: lc("longest-repeating-character-replacement") },
+      {
+        name: "Best Time to Buy/Sell Stock",
+        url: lc("best-time-to-buy-and-sell-stock"),
+      },
+      {
+        name: "Longest Substring w/o Repeat",
+        url: lc("longest-substring-without-repeating-characters"),
+      },
+      {
+        name: "Longest Repeating Char Replace",
+        url: lc("longest-repeating-character-replacement"),
+      },
     ],
   },
   "Prefix sums": {
@@ -59,7 +71,10 @@ for x in nums:
     seen[pref] = seen.get(pref, 0) + 1`,
     problems: [
       { name: "Subarray Sum Equals K", url: lc("subarray-sum-equals-k") },
-      { name: "Product of Array Except Self", url: lc("product-of-array-except-self") },
+      {
+        name: "Product of Array Except Self",
+        url: lc("product-of-array-except-self"),
+      },
       { name: "Range Sum Query", url: lc("range-sum-query-immutable") },
     ],
   },
@@ -71,7 +86,10 @@ for i, x in enumerate(nums):
     stack.append(i)`,
     problems: [
       { name: "Daily Temperatures", url: lc("daily-temperatures") },
-      { name: "Largest Rectangle in Histogram", url: lc("largest-rectangle-in-histogram") },
+      {
+        name: "Largest Rectangle in Histogram",
+        url: lc("largest-rectangle-in-histogram"),
+      },
       { name: "Next Greater Element I", url: lc("next-greater-element-i") },
     ],
   },
@@ -86,7 +104,10 @@ return lo`,
     problems: [
       { name: "Binary Search", url: lc("binary-search") },
       { name: "Koko Eating Bananas", url: lc("koko-eating-bananas") },
-      { name: "Find Min in Rotated Array", url: lc("find-minimum-in-rotated-sorted-array") },
+      {
+        name: "Find Min in Rotated Array",
+        url: lc("find-minimum-in-rotated-sorted-array"),
+      },
     ],
   },
   "Fast & slow pointers": {
@@ -98,8 +119,14 @@ while fast and fast.next:
     if slow is fast: return True   # cycle`,
     problems: [
       { name: "Linked List Cycle", url: lc("linked-list-cycle") },
-      { name: "Find the Duplicate Number", url: lc("find-the-duplicate-number") },
-      { name: "Middle of the Linked List", url: lc("middle-of-the-linked-list") },
+      {
+        name: "Find the Duplicate Number",
+        url: lc("find-the-duplicate-number"),
+      },
+      {
+        name: "Middle of the Linked List",
+        url: lc("middle-of-the-linked-list"),
+      },
     ],
   },
   "In-place reversal": {
@@ -138,7 +165,10 @@ while q:
         if nb not in seen:
             seen.add(nb); q.append(nb)`,
     problems: [
-      { name: "Binary Tree Level Order", url: lc("binary-tree-level-order-traversal") },
+      {
+        name: "Binary Tree Level Order",
+        url: lc("binary-tree-level-order-traversal"),
+      },
       { name: "Rotting Oranges", url: lc("rotting-oranges") },
       { name: "Number of Islands", url: lc("number-of-islands") },
     ],
@@ -151,7 +181,10 @@ def find(x):
     return x
 def union(a, b): parent[find(a)] = find(b)`,
     problems: [
-      { name: "Number of Connected Components", url: lc("number-of-connected-components-in-an-undirected-graph") },
+      {
+        name: "Number of Connected Components",
+        url: lc("number-of-connected-components-in-an-undirected-graph"),
+      },
       { name: "Redundant Connection", url: lc("redundant-connection") },
       { name: "Graph Valid Tree", url: lc("graph-valid-tree") },
     ],
@@ -178,7 +211,10 @@ while q:
         node.end = True`,
     problems: [
       { name: "Implement Trie", url: lc("implement-trie-prefix-tree") },
-      { name: "Design Add & Search Words", url: lc("design-add-and-search-words-data-structure") },
+      {
+        name: "Design Add & Search Words",
+        url: lc("design-add-and-search-words-data-structure"),
+      },
       { name: "Word Search II", url: lc("word-search-ii") },
     ],
   },
@@ -192,7 +228,10 @@ while pq:
             dist[v] = d + w; heappush(pq, (d + w, v))`,
     problems: [
       { name: "Network Delay Time", url: lc("network-delay-time") },
-      { name: "Cheapest Flights K Stops", url: lc("cheapest-flights-within-k-stops") },
+      {
+        name: "Cheapest Flights K Stops",
+        url: lc("cheapest-flights-within-k-stops"),
+      },
       { name: "Path With Minimum Effort", url: lc("path-with-minimum-effort") },
     ],
   },
@@ -204,9 +243,15 @@ for x in nums:
     if len(heap) > k: heapq.heappop(heap)
 return heap[0]                 # kth largest`,
     problems: [
-      { name: "Kth Largest Element", url: lc("kth-largest-element-in-an-array") },
+      {
+        name: "Kth Largest Element",
+        url: lc("kth-largest-element-in-an-array"),
+      },
       { name: "Top K Frequent Elements", url: lc("top-k-frequent-elements") },
-      { name: "Find Median from Data Stream", url: lc("find-median-from-data-stream") },
+      {
+        name: "Find Median from Data Stream",
+        url: lc("find-median-from-data-stream"),
+      },
     ],
   },
   Intervals: {
@@ -218,7 +263,10 @@ for s, e in intervals[1:]:
     problems: [
       { name: "Merge Intervals", url: lc("merge-intervals") },
       { name: "Insert Interval", url: lc("insert-interval") },
-      { name: "Non-overlapping Intervals", url: lc("non-overlapping-intervals") },
+      {
+        name: "Non-overlapping Intervals",
+        url: lc("non-overlapping-intervals"),
+      },
     ],
   },
   "1D DP": {
@@ -230,7 +278,10 @@ return dp[n]`,
     problems: [
       { name: "Climbing Stairs", url: lc("climbing-stairs") },
       { name: "House Robber", url: lc("house-robber") },
-      { name: "Longest Increasing Subsequence", url: lc("longest-increasing-subsequence") },
+      {
+        name: "Longest Increasing Subsequence",
+        url: lc("longest-increasing-subsequence"),
+      },
     ],
   },
   "2D DP / grids": {
@@ -242,7 +293,10 @@ for i in range(1, m+1):
 return dp[m][n]`,
     problems: [
       { name: "Unique Paths", url: lc("unique-paths") },
-      { name: "Longest Common Subsequence", url: lc("longest-common-subsequence") },
+      {
+        name: "Longest Common Subsequence",
+        url: lc("longest-common-subsequence"),
+      },
       { name: "Edit Distance", url: lc("edit-distance") },
     ],
   },
@@ -253,7 +307,10 @@ for w, val in items:            # 0/1: iterate cap high->low
         dp[c] = max(dp[c], dp[c - w] + val)
 return dp[cap]`,
     problems: [
-      { name: "Partition Equal Subset Sum", url: lc("partition-equal-subset-sum") },
+      {
+        name: "Partition Equal Subset Sum",
+        url: lc("partition-equal-subset-sum"),
+      },
       { name: "Coin Change", url: lc("coin-change") },
       { name: "Target Sum", url: lc("target-sum") },
     ],

@@ -304,9 +304,10 @@ Files: `app/notes/*`, `PostEditor.tsx`, `TagInput.tsx`, `CoverPicker.tsx`,
   `marked.parse(content, { async: false, breaks: true })` into the `.article`
   stylesheet. Rendering is `dangerouslySetInnerHTML` — safe only because the
   owner is the only author.
-- **Drafts** are `publishedAt: null`. They sort first (`nulls: "first"`), show a
-  "draft" badge, and their cards link to the editor rather than the reader.
-  They're still publicly reachable via `/api/posts` and `/notes/[id]`.
+- **Drafts** are `publishedAt: null`. They sort last (`nulls: "last"`, then
+  `updatedAt` desc so the one you were last in comes first), show a "draft"
+  badge, and their cards link to the editor rather than the reader. They're
+  still publicly reachable via `/api/posts` and `/notes/[id]`.
 - **Cover image**: `coverImage` if set (chosen and cropped in `CoverPicker`,
   uploaded to `/api/images`), else the first markdown image in the body
   (`firstImage()`), else a serif initial on a tinted card.
@@ -314,10 +315,12 @@ Files: `app/notes/*`, `PostEditor.tsx`, `TagInput.tsx`, `CoverPicker.tsx`,
   case-insensitive dedupe, ≤40 chars each, ≤12 per post). `postTagCounts()`
   powers both the editor's suggestions and the room's topic filter, so a tag
   typed once can be clicked instead of retyped.
-- **Evergreen sinking**: posts tagged `learning` (`EVERGREEN_TAGS` in
-  `app/notes/page.tsx`) sort below dated essays via a stable sort, with a
-  "learning notes" divider inserted at the boundary — and the divider is mapped
-  onto the current page so it lands where the boundary actually falls.
+- **Piles**: `rank()` in `app/notes/page.tsx` splits the room into three, in
+  order — finished dated essays, then posts tagged `learning`
+  (`EVERGREEN_TAGS`), then drafts. A stable sort keeps the date order inside
+  each pile, and a divider ("learning notes", "drafts") is inserted at each
+  boundary — mapped onto the current page so it lands where the boundary
+  actually falls, and skipped when a topic filter is active.
 - **Pagination**: 12 per page (fills 2- and 3-column grids without an orphan
   row); page links preserve the active tag and drop `?page` for page 1.
 - **Read time**: `readingStats()` strips markdown syntax so links and image

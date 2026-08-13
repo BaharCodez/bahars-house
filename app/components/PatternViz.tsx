@@ -25,15 +25,7 @@ function Cells({ n, dim }: { n: number; dim?: "sides" | null }) {
   );
 }
 
-function Node({
-  x,
-  y,
-  delay,
-}: {
-  x: number;
-  y: number;
-  delay: number;
-}) {
+function Node({ x, y, delay }: { x: number; y: number; delay: number }) {
   return (
     <div
       className="dsa-anim border-line absolute flex h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border text-[9px]"
@@ -105,13 +97,21 @@ export default function PatternViz({ kind }: { kind: string }) {
           <Cells n={7} />
           <span
             className="dsa-anim text-accent absolute -bottom-0 text-xs font-bold"
-            style={{ left: 4, animationName: "dsa-ptr-l", ["--conv" as string]: `${3 * CELL}px` }}
+            style={{
+              left: 4,
+              animationName: "dsa-ptr-l",
+              ["--conv" as string]: `${3 * CELL}px`,
+            }}
           >
             ▲L
           </span>
           <span
             className="dsa-anim text-accent-2 absolute -bottom-0 text-xs font-bold"
-            style={{ right: 4, animationName: "dsa-ptr-r", ["--conv" as string]: `${3 * CELL}px` }}
+            style={{
+              right: 4,
+              animationName: "dsa-ptr-r",
+              ["--conv" as string]: `${3 * CELL}px`,
+            }}
           >
             R▲
           </span>

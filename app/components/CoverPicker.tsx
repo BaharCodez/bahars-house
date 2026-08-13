@@ -134,7 +134,10 @@ export default function CoverPicker({
       );
       if (!blob) throw new Error("export failed");
       const form = new FormData();
-      form.append("file", new File([blob], "cover.jpg", { type: "image/jpeg" }));
+      form.append(
+        "file",
+        new File([blob], "cover.jpg", { type: "image/jpeg" }),
+      );
       const uploadRes = await fetch("/api/images", {
         method: "POST",
         body: form,
