@@ -19,6 +19,20 @@ function isEvergreen(tags: string[]): boolean {
   return tags.some((t) => EVERGREEN_TAGS.has(t.toLowerCase()));
 }
 
+/* Which pile an entry falls in. The room opens on finished writing, so the
+   dated essays come first, then the evergreen learning pile, then anything
+   still unpublished. */
+function rank(post: { tags: string[]; publishedAt: Date | null }): number {
+  if (!post.publishedAt) return 2;
+  return isEvergreen(post.tags) ? 1 : 0;
+}
+
+/* Section headings, shown at the first entry of each pile below the first. */
+const SECTIONS = [
+  { rank: 1, label: "learning notes" },
+  { rank: 2, label: "drafts" },
+];
+
 /* The first embedded image, used as the card's cover. */
 function firstImage(md: string): string | null {
   const m = md.match(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/);
@@ -46,7 +60,12 @@ export default async function NotesPage({
   const active = tag?.trim().toLowerCase() || null;
 
   const posts = await prisma.post.findMany({
-    orderBy: [{ publishedAt: { sort: "desc", nulls: "first" } }],
+    // Published newest first; drafts (no publishedAt) fall to the end, most
+    // recently touched first — the one you were last working on.
+    orderBy: [
+      { publishedAt: { sort: "desc", nulls: "last" } },
+      { updatedAt: "desc" },
+    ],
     select: {
       id: true,
       title: true,
@@ -76,31 +95,34 @@ export default async function NotesPage({
     ? posts.filter((p) => p.tags.some((t) => t.toLowerCase() === active))
     : posts;
 
-  // Evergreen "learning" notes sink to the bottom (stable sort keeps the
-  // date order within each group). Skipped when filtering to one topic.
-  const shown = [...filtered].sort(
-    (a, b) => Number(isEvergreen(a.tags)) - Number(isEvergreen(b.tags)),
-  );
+  // Finished essays, then evergreen "learning" notes, then drafts (a stable
+  // sort keeps the date order within each pile).
+  const shown = [...filtered].sort((a, b) => rank(a) - rank(b));
 
-  // Paginate: 20 entries a page, newest first, evergreen pile last.
+  // Paginate: 12 entries a page, in that pile order.
   // 12 fills the 2- and 3-column grid evenly (no orphan row) and keeps each
   // page a quick scroll. Bump it if the room gets busy.
   const PAGE_SIZE = 12;
   const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
-  const current = Math.min(Math.max(1, Math.trunc(Number(page)) || 1), totalPages);
+  const current = Math.min(
+    Math.max(1, Math.trunc(Number(page)) || 1),
+    totalPages,
+  );
   const start = (current - 1) * PAGE_SIZE;
   const pageItems = shown.slice(start, start + PAGE_SIZE);
 
-  // Global row where the evergreen pile starts, mapped onto this page so the
-  // "learning notes" label lands wherever that boundary actually falls.
-  const evergreenStart =
-    active || shown[0] === undefined || isEvergreen(shown[0].tags)
-      ? -1
-      : shown.findIndex((p) => isEvergreen(p.tags));
-  const dividerIndex =
-    evergreenStart >= start && evergreenStart < start + PAGE_SIZE
-      ? evergreenStart - start
-      : -1;
+  // Where each pile starts globally, mapped onto this page so a heading lands
+  // wherever that boundary actually falls. Skipped when filtering to one
+  // topic, and when a pile opens the list (nothing above it to divide from).
+  const dividers = new Map<number, string>();
+  if (!active) {
+    for (const section of SECTIONS) {
+      const at = shown.findIndex((p) => rank(p) === section.rank);
+      if (at > 0 && at >= start && at < start + PAGE_SIZE) {
+        dividers.set(at - start, section.label);
+      }
+    }
+  }
 
   // Page links preserve the active topic; page 1 drops the ?page param.
   const pageHref = (p: number) => {
@@ -129,7 +151,7 @@ export default async function NotesPage({
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/notes/board"
-              className="border-line text-ink hover:bg-accent/10 rotate-2 rounded-sm border bg-surface px-3 py-2 text-xs font-medium shadow-[3px_4px_0_rgba(42,31,14,0.1)] transition-all hover:rotate-0"
+              className="border-line text-ink hover:bg-accent/10 bg-surface rotate-2 rounded-sm border px-3 py-2 text-xs font-medium shadow-[3px_4px_0_rgba(42,31,14,0.1)] transition-all hover:rotate-0"
             >
               📌 the hobby board
             </Link>
@@ -195,70 +217,70 @@ export default async function NotesPage({
             const href = post.publishedAt
               ? `/notes/${post.id}`
               : `/notes/write?id=${post.id}`;
-            const divider =
-              i === dividerIndex ? (
-                <div
-                  key="evergreen-divider"
-                  className="col-span-full mt-2 flex items-center gap-3"
-                >
-                  <span className="text-ink-soft/60 font-mono text-[0.65rem] tracking-[0.2em] uppercase">
-                    learning notes
-                  </span>
-                  <span className="border-line flex-1 border-t" />
-                </div>
-              ) : null;
+            const label = dividers.get(i);
+            const divider = label ? (
+              <div
+                key="section-divider"
+                className="col-span-full mt-2 flex items-center gap-3"
+              >
+                <span className="text-ink-soft/60 font-mono text-[0.65rem] tracking-[0.2em] uppercase">
+                  {label}
+                </span>
+                <span className="border-line flex-1 border-t" />
+              </div>
+            ) : null;
             return (
               <Fragment key={post.id}>
                 {divider}
                 <article className="group flex flex-col">
-                <Link href={href} className="block">
-                  {cover ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={cover}
-                      alt=""
-                      loading="lazy"
-                      className="border-line aspect-[3/2] w-full rounded-md border object-cover"
-                    />
-                  ) : (
-                    <div className="border-line bg-accent/8 flex aspect-[3/2] w-full items-center justify-center rounded-md border">
-                      <span className="text-accent/30 font-serif text-4xl italic">
-                        {post.title.trim().charAt(0).toUpperCase() || "✎"}
-                      </span>
+                  <Link href={href} className="block">
+                    {cover ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={cover}
+                        alt=""
+                        loading="lazy"
+                        className="border-line aspect-[3/2] w-full rounded-md border object-cover"
+                      />
+                    ) : (
+                      <div className="border-line bg-accent/8 flex aspect-[3/2] w-full items-center justify-center rounded-md border">
+                        <span className="text-accent/30 font-serif text-4xl italic">
+                          {post.title.trim().charAt(0).toUpperCase() || "✎"}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+
+                  <div className="text-ink-soft/70 mt-2.5 flex items-center gap-2 font-mono text-[0.65rem] tracking-wider">
+                    <span className="text-accent-2">
+                      {post.publishedAt ? stamp(post.publishedAt) : "DRAFT"}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>{minutes} min</span>
+                  </div>
+
+                  <h3 className="text-ink mt-1 font-serif text-base leading-snug font-bold">
+                    <Link
+                      href={href}
+                      className="group-hover:text-accent underline-offset-4 transition-colors group-hover:underline"
+                    >
+                      {post.title}
+                    </Link>
+                  </h3>
+
+                  {post.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1">
+                      {post.tags.map((t) => (
+                        <Link
+                          key={t}
+                          href={`/notes?tag=${encodeURIComponent(t)}`}
+                          className="text-ink-soft/70 hover:text-accent font-mono text-[0.65rem] transition-colors"
+                        >
+                          #{t}
+                        </Link>
+                      ))}
                     </div>
                   )}
-                </Link>
-
-                <div className="text-ink-soft/70 mt-2.5 flex items-center gap-2 font-mono text-[0.65rem] tracking-wider">
-                  <span className="text-accent-2">
-                    {post.publishedAt ? stamp(post.publishedAt) : "DRAFT"}
-                  </span>
-                  <span aria-hidden>·</span>
-                  <span>{minutes} min</span>
-                </div>
-
-                <h3 className="text-ink mt-1 font-serif text-base leading-snug font-bold">
-                  <Link
-                    href={href}
-                    className="group-hover:text-accent underline-offset-4 transition-colors group-hover:underline"
-                  >
-                    {post.title}
-                  </Link>
-                </h3>
-
-                {post.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1">
-                    {post.tags.map((t) => (
-                      <Link
-                        key={t}
-                        href={`/notes?tag=${encodeURIComponent(t)}`}
-                        className="text-ink-soft/70 hover:text-accent font-mono text-[0.65rem] transition-colors"
-                      >
-                        #{t}
-                      </Link>
-                    ))}
-                  </div>
-                )}
                 </article>
               </Fragment>
             );

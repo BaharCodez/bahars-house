@@ -45,8 +45,7 @@ export async function POST(req: Request) {
   if (await isOwner()) return new NextResponse(null, { status: 204 });
 
   const body = await req.json().catch(() => ({}));
-  const path =
-    typeof body?.path === "string" ? body.path.slice(0, 200) : "/";
+  const path = typeof body?.path === "string" ? body.path.slice(0, 200) : "/";
   const referrer = typeof body?.ref === "string" ? refHost(body.ref) : "";
 
   const h = req.headers;
@@ -70,7 +69,16 @@ export async function POST(req: Request) {
     : "";
 
   await prisma.visit.create({
-    data: { path, country, city, region, referrer, device, ipHash, visitorName },
+    data: {
+      path,
+      country,
+      city,
+      region,
+      referrer,
+      device,
+      ipHash,
+      visitorName,
+    },
   });
   return new NextResponse(null, { status: 204 });
 }

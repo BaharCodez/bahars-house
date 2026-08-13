@@ -31,8 +31,18 @@ const ROOMS: Room[] = [
 // A little fern for the sidebar foot.
 function Fern({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 200" className={className} aria-hidden="true" fill="none">
-      <path d="M60 190 C60 190 55 100 60 10" stroke="#5C7D5D" strokeWidth="2" opacity="0.6" />
+    <svg
+      viewBox="0 0 120 200"
+      className={className}
+      aria-hidden="true"
+      fill="none"
+    >
+      <path
+        d="M60 190 C60 190 55 100 60 10"
+        stroke="#5C7D5D"
+        strokeWidth="2"
+        opacity="0.6"
+      />
       {[20, 40, 60, 80, 100, 120, 140].map((y, i) => (
         <g key={i}>
           <path
@@ -127,7 +137,10 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
       {/* Mobile top bar */}
       <header
         className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 px-4 md:hidden"
-        style={{ backgroundColor: "#2A1F0E", borderBottom: "1px solid #3D5A3E" }}
+        style={{
+          backgroundColor: "#2A1F0E",
+          borderBottom: "1px solid #3D5A3E",
+        }}
       >
         <button
           type="button"
@@ -135,8 +148,19 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
           aria-label="Menu"
           className="text-[#F4ECD8]"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
         <Link href="/" className="font-serif text-[#F4ECD8]">

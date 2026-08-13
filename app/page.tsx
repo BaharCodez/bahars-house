@@ -7,27 +7,78 @@ import { isOwner } from "@/app/lib/session";
    forwarded to the study. */
 
 const ROOMS = [
-  { href: "/hallway", label: "My Portfolio", emoji: "💼", tagline: "projects, jobs & wins" },
-  { href: "/notes", label: "Writing Room", emoji: "✒️", tagline: "notes & essays" },
-  { href: "/study", label: "The Study", emoji: "📚", tagline: "what I'm reading" },
+  {
+    href: "/hallway",
+    label: "My Portfolio",
+    emoji: "💼",
+    tagline: "projects, jobs & wins",
+  },
+  {
+    href: "/notes",
+    label: "Writing Room",
+    emoji: "✒️",
+    tagline: "notes & essays",
+  },
+  {
+    href: "/study",
+    label: "The Study",
+    emoji: "📚",
+    tagline: "what I'm reading",
+  },
   // Roadmaps is a private room — only shown to the owner (see ownerOnly).
-  { href: "/roadmaps", label: "Roadmaps", emoji: "🗺️", tagline: "learn it chunk by chunk", ownerOnly: true },
-  { href: "/daily", label: "Daily Room", emoji: "☕", tagline: "today, always today" },
-  { href: "/workshop", label: "The Workshop", emoji: "🔧", tagline: "things I make" },
+  {
+    href: "/roadmaps",
+    label: "Roadmaps",
+    emoji: "🗺️",
+    tagline: "learn it chunk by chunk",
+    ownerOnly: true,
+  },
+  {
+    href: "/daily",
+    label: "Daily Room",
+    emoji: "☕",
+    tagline: "today, always today",
+  },
+  {
+    href: "/workshop",
+    label: "The Workshop",
+    emoji: "🔧",
+    tagline: "things I make",
+  },
 ];
 
 // Hand-drawn leaf, echoing the sidebar botanicals.
 function Leaf({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 80 120" className={className} aria-hidden="true" fill="none">
+    <svg
+      viewBox="0 0 80 120"
+      className={className}
+      aria-hidden="true"
+      fill="none"
+    >
       <path
         d="M40 110 C40 110 10 80 8 50 C6 20 40 5 40 5 C40 5 74 20 72 50 C70 80 40 110 40 110Z"
         fill="#5C7D5D"
         opacity="0.5"
       />
-      <path d="M40 110 L40 5" stroke="#3D5A3E" strokeWidth="1.5" opacity="0.5" />
-      <path d="M40 70 C40 70 22 55 18 40" stroke="#3D5A3E" strokeWidth="1" opacity="0.4" />
-      <path d="M40 55 C40 55 55 42 60 30" stroke="#3D5A3E" strokeWidth="1" opacity="0.4" />
+      <path
+        d="M40 110 L40 5"
+        stroke="#3D5A3E"
+        strokeWidth="1.5"
+        opacity="0.5"
+      />
+      <path
+        d="M40 70 C40 70 22 55 18 40"
+        stroke="#3D5A3E"
+        strokeWidth="1"
+        opacity="0.4"
+      />
+      <path
+        d="M40 55 C40 55 55 42 60 30"
+        stroke="#3D5A3E"
+        strokeWidth="1"
+        opacity="0.4"
+      />
     </svg>
   );
 }
@@ -69,11 +120,11 @@ export default async function Hallway({
           This is a safe space for me to build, explore, and write.
         </p>
         <p className="text-ink-soft/90 mt-4 max-w-xl leading-relaxed">
-          Hiii I&apos;m a Computer Science student at the University of Edinburgh who
-          loves to challenge myself and learn. Between a part-time job, uni,
-          picking up new skills, and whatever side quest I&apos;m on, life gets
-          pretty full, so I built this not just to show my work but to track my
-          hobbies and grow new habits.
+          Hiii I&apos;m a Computer Science student at the University of
+          Edinburgh who loves to challenge myself and learn. Between a part-time
+          job, uni, picking up new skills, and whatever side quest I&apos;m on,
+          life gets pretty full, so I built this not just to show my work but to
+          track my hobbies and grow new habits.
         </p>
         <p className="text-ink-soft/90 mt-4 max-w-xl leading-relaxed">
           I&apos;ll be updating it often, so if something looks unpolished or

@@ -500,7 +500,8 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
             // one, the section itself).
             const threshold = steps[i + 1]?.cfi ?? steps[i].cfi;
             if (!(cmpSafe(cfi, threshold) >= 0)) continue;
-            const crossed = backfill || last === null || cmpSafe(last, threshold) < 0;
+            const crossed =
+              backfill || last === null || cmpSafe(last, threshold) < 0;
             if (!crossed) continue;
             trackedDoneRef.current.add(steps[i].id);
             trackPendingRef.current.add(steps[i].id);
