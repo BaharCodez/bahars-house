@@ -1,89 +1,79 @@
-# The Same Page
+# bahar's house
 
-A social reading app — read EPUBs together, highlight passages, annotate, and share notes with friends. Installable as a PWA.
+A personal site laid out as rooms of a house: a portfolio wall, a writing room,
+a study with an EPUB reader, a daily room with a reading desk, owner-only
+learning roadmaps, and a workshop. Installable as a PWA.
 
-## Tech Stack
+The repo is still named `social-reading-app` and started life as "The Same Page",
+a shared EPUB reading app — that machinery is still here and still works, but the
+product on top of it is single-owner: **anyone may look at the house, only the
+owner may change it.**
 
-### Framework & Language
+📚 **Full engineering documentation lives in [`docs/`](docs/README.md).**
 
-- **[Next.js](https://nextjs.org) 16** (App Router) — React framework, server components, route handlers
-- **[React](https://react.dev) 19** + **React DOM 19**
-- **[TypeScript](https://www.typescriptlang.org) 5** (target ES2017)
-- **Node.js** runtime
-
-### Styling
-
-- **[Tailwind CSS](https://tailwindcss.com) 4** (via `@tailwindcss/postcss`)
-- **PostCSS**
-- `prettier-plugin-tailwindcss` for class sorting
-
-### Database & ORM
-
-- **[PostgreSQL](https://www.postgresql.org)** — primary datastore (`pg` driver + `@prisma/adapter-pg`)
-- **[Prisma](https://www.prisma.io) 7** — ORM and migrations (generated client output to `app/generated/prisma`)
-- Models: `User`, `Account`, `Session`, `VerificationToken`, `Book`, `Annotation`, `ReadingProgress`
-
-### Authentication
-
-- **[Auth.js / NextAuth.js](https://authjs.dev) 5 (beta)** with the **Prisma adapter** (`@auth/prisma-adapter`)
-- Providers: **Google OAuth** and **Credentials** (email/password)
-- **bcryptjs** for password hashing; JWT sessions for credentials sign-in
-
-### Reading / EPUB
-
-- **[epub.js](https://github.com/futurepress/epub.js)** — EPUB parsing and rendering (per-chapter scrolled view, custom themes)
-
-### Validation
-
-- **[Zod](https://zod.dev) 4** — schema validation for forms and API input
-
-### PWA
-
-- Web app manifest (`app/manifest.ts`) — standalone install, custom icons, theming
-
-### Tooling
-
-- **ESLint 9** (`eslint-config-next`, `eslint-config-prettier`)
-- **Prettier 3**
-- **dotenv** for local environment configuration
-
-## Getting Started
-
-Install dependencies and set up the database:
+## Quick start
 
 ```bash
-npm install
-npx prisma migrate dev   # apply migrations to your Postgres database
+npm install                # runs prisma generate
+cp /dev/null .env          # then fill it in (see below)
+npx prisma db push         # create the schema
+npm run dev                # http://localhost:3000
 ```
 
-Set the required environment variables (e.g. in `.env`):
+On a fresh database, visit `/signup` once to create the owner account — the
+signup door closes as soon as one user exists.
 
 ```bash
-DATABASE_URL=postgresql://...
-AUTH_SECRET=...
-AUTH_GOOGLE_ID=...
-AUTH_GOOGLE_SECRET=...
+# .env
+DATABASE_URL=postgresql://…
+AUTH_SECRET=…              # openssl rand -base64 32
+OWNER_EMAIL=you@example.com
+AUTH_GOOGLE_ID=…           # optional
+AUTH_GOOGLE_SECRET=…       # optional
 ```
 
-Run the development server:
+Details, troubleshooting and LAN/phone testing: [docs/01 — Setup](docs/01-setup.md).
 
-```bash
-npm run dev
-```
+## Stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser.
+- **Next.js 16** (App Router, server components) + **React 19** + **TypeScript 5**
+- **Tailwind CSS 4** (config in CSS, 7 swappable themes)
+- **PostgreSQL** (Neon) via **Prisma 7** with the `@prisma/adapter-pg` driver adapter
+- **Auth.js 5 (beta)** — Google OAuth + credentials, JWT sessions
+- **Zod 4** on every request body
+- `epubjs` (reader), `@mozilla/readability` + `linkedom` (article extraction),
+  `marked` (post rendering)
 
 ## Scripts
 
-| Command                | Description                          |
-| ---------------------- | ------------------------------------ |
-| `npm run dev`          | Start the dev server                 |
-| `npm run build`        | `prisma generate` + production build |
-| `npm run start`        | Start the production server          |
-| `npm run lint`         | Run ESLint                           |
-| `npm run format`       | Format with Prettier                 |
-| `npm run format:check` | Check formatting                     |
+| Command                           | Description                          |
+| --------------------------------- | ------------------------------------ |
+| `npm run dev`                     | Dev server                           |
+| `npm run build`                   | `prisma generate` + production build |
+| `npm start`                       | Serve the production build           |
+| `npm run lint`                    | ESLint                               |
+| `npm run format` / `format:check` | Prettier                             |
+
+CI (`.github/workflows/ci.yml`) runs lint → format check → build on Node 22.
+There are no tests.
+
+## Documentation index
+
+| Doc                                                              | Contents                                                                   |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [01 — Setup](docs/01-setup.md)                                   | Install, env vars, database bootstrap, troubleshooting                     |
+| [02 — Architecture](docs/02-architecture.md)                     | App Router layout, rendering strategy, data flow                           |
+| [03 — Auth & access control](docs/03-auth-and-access-control.md) | The owner model and how "public can't edit" is enforced                    |
+| [04 — Data model](docs/04-data-model.md)                         | All 20 Prisma models, field by field                                       |
+| [05 — API reference](docs/05-api-reference.md)                   | All 23 route handlers                                                      |
+| [06 — UI & theming](docs/06-ui-and-styling.md)                   | Rooms, themes, CSS tokens, component inventory                             |
+| [07 — Feature deep dives](docs/07-features.md)                   | EPUB reader, reading desk, roadmaps/DSA/LeetCode, daily room, writing room |
+| [08 — Operations](docs/08-operations.md)                         | CI, deploy, schema changes, seeding, backups                               |
+| [09 — Gotchas](docs/09-gotchas.md)                               | Dead code, sharp edges, limits                                             |
 
 ## Deployment
 
-Target deployment is **Vercel** (Next.js host) with **Neon** for managed Postgres.
+Vercel (zero-config) + Neon Postgres. Set `DATABASE_URL`, `AUTH_SECRET` and
+`OWNER_EMAIL` in the Vercel project — without `OWNER_EMAIL` the owner check falls
+back to "oldest account in the database". See
+[docs/08 — Operations](docs/08-operations.md).
