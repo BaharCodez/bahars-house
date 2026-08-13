@@ -3,8 +3,10 @@ import { connection } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { articleOfTheDay } from "@/app/lib/feeds";
 import { listeningOfTheDay, sceneOfTheDay } from "@/app/lib/spanish";
+import { isOwner } from "@/app/lib/session";
 import RoomShell from "@/app/components/RoomShell";
 import DailyRoom from "@/app/components/DailyRoom";
+import type { Grasp } from "@/app/components/ArticleReader";
 
 export const metadata: Metadata = {
   title: "the daily room — bahar's house",
@@ -24,7 +26,7 @@ export default async function DailyPage() {
   // and CI builds have no database.
   await connection();
   const day = serverDay();
-  const [article, ticks, bookmarks] = await Promise.all([
+  const [article, ticks, bookmarks, canEdit, graspRows] = await Promise.all([
     articleOfTheDay(day).catch(() => null),
     prisma.dailyTick.findMany({
       orderBy: { day: "desc" },
@@ -33,8 +35,48 @@ export default async function DailyPage() {
     }),
     prisma.bookmark.findMany({
       orderBy: [{ favorite: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        url: true,
+        title: true,
+        source: true,
+        favorite: true,
+        shelf: true,
+        fetchedAt: true,
+      },
+    }),
+    isOwner(),
+    // How each shelved read landed, counted per article.
+    prisma.highlight.groupBy({
+      by: ["bookmarkId", "grasp"],
+      _count: { _all: true },
     }),
   ]);
+
+  // The running "what I don't get yet" pile across every read on the shelf.
+  const fuzzy = canEdit
+    ? await prisma.highlight.findMany({
+        where: { grasp: { in: ["half", "lost"] } },
+        orderBy: { createdAt: "desc" },
+        take: 30,
+        select: {
+          id: true,
+          quote: true,
+          note: true,
+          grasp: true,
+          bookmark: { select: { id: true, title: true } },
+        },
+      })
+    : [];
+
+  // Reading notes are the owner's own; visitors just see the shelf.
+  const marks: Record<string, Record<Grasp, number>> = {};
+  for (const row of canEdit ? graspRows : []) {
+    const counts = (marks[row.bookmarkId] ??= { got: 0, half: 0, lost: 0 });
+    if (row.grasp === "got" || row.grasp === "half" || row.grasp === "lost") {
+      counts[row.grasp] = row._count._all;
+    }
+  }
 
   return (
     <RoomShell
@@ -51,7 +93,20 @@ export default async function DailyPage() {
         scene={sceneOfTheDay(day)}
         listening={listeningOfTheDay(day)}
         ticks={ticks}
-        bookmarks={bookmarks}
+        bookmarks={bookmarks.map((b) => ({
+          ...b,
+          pulledIn: b.fetchedAt !== null,
+        }))}
+        marks={marks}
+        fuzzy={fuzzy.map((h) => ({
+          id: h.id,
+          quote: h.quote,
+          note: h.note,
+          grasp: h.grasp as Grasp,
+          bookmarkId: h.bookmark.id,
+          bookmarkTitle: h.bookmark.title,
+        }))}
+        canEdit={canEdit}
         serverDay={day}
       />
     </RoomShell>

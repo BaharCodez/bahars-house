@@ -3,8 +3,13 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { isOwner } from "@/app/lib/session";
+import {
+  LEETCODE_SYNCED_AT,
+  LEETCODE_USER,
+  getSetting,
+} from "@/app/lib/settings";
 import RoomShell from "@/app/components/RoomShell";
-import RoadmapView from "@/app/components/RoadmapView";
+import RoadmapView, { type ProblemEntry } from "@/app/components/RoadmapView";
 
 export async function generateMetadata({
   params,
@@ -30,16 +35,40 @@ export default async function RoadmapPage({
 }) {
   await connection();
   const { slug } = await params;
-  const [roadmap, canEdit] = await Promise.all([
+  const [roadmap, canEdit, drilled, lcUser, lcSyncedAt] = await Promise.all([
     prisma.roadmap.findUnique({
       where: { slug },
       include: { steps: { orderBy: { order: "asc" } } },
     }),
     isOwner(),
+    // How the drilled problems went — the evidence half of the DSA board.
+    prisma.problemLog.findMany({
+      select: {
+        url: true,
+        status: true,
+        auto: true,
+        rating: true,
+        note: true,
+      },
+    }),
+    getSetting(LEETCODE_USER),
+    getSetting(LEETCODE_SYNCED_AT),
   ]);
   // The whole roadmaps room is owner-only — others get a 404 even with the URL.
   if (!canEdit) notFound();
   if (!roadmap) notFound();
+
+  const problemLog: Record<string, ProblemEntry> = {};
+  for (const p of drilled) {
+    if (p.status === "solved" || p.status === "struggled") {
+      problemLog[p.url] = {
+        status: p.status,
+        rating: p.rating,
+        note: p.note,
+        auto: p.auto,
+      };
+    }
+  }
 
   return (
     <RoomShell
@@ -48,7 +77,13 @@ export default async function RoadmapPage({
       tagline={roadmap.subtitle}
       back={{ href: "/roadmaps", label: "roadmaps" }}
     >
-      <RoadmapView steps={roadmap.steps} canEdit={canEdit} slug={roadmap.slug} />
+      <RoadmapView
+        steps={roadmap.steps}
+        canEdit={canEdit}
+        slug={roadmap.slug}
+        problemLog={problemLog}
+        leetcode={{ username: lcUser, syncedAt: lcSyncedAt }}
+      />
     </RoomShell>
   );
 }

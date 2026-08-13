@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
+import { roadmapStepPatchSchema } from "@/app/lib/validation";
 
-// Tick a roadmap step done / undone. Owner-only — it's Bahar's progress.
+// Tick a roadmap step done / undone, or rate how solid it feels.
+// Owner-only — it's Bahar's progress.
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -12,13 +14,16 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
-  if (typeof body?.done !== "boolean") {
-    return new NextResponse(null, { status: 400 });
-  }
+  const parsed = roadmapStepPatchSchema.safeParse(body);
+  if (!parsed.success) return new NextResponse(null, { status: 400 });
 
   const step = await prisma.roadmapStep
-    .update({ where: { id }, data: { done: body.done } })
+    .update({ where: { id }, data: parsed.data })
     .catch(() => null);
   if (!step) return new NextResponse(null, { status: 404 });
-  return NextResponse.json({ id: step.id, done: step.done });
+  return NextResponse.json({
+    id: step.id,
+    done: step.done,
+    confidence: step.confidence,
+  });
 }

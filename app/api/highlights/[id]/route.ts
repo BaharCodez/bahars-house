@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
-import { bookmarkPatchSchema } from "@/app/lib/validation";
+import { highlightPatchSchema } from "@/app/lib/validation";
 
-// Star / unstar a read, or move it to another shelf.
+// Change how a passage landed, or what you said about it.
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -13,19 +13,19 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
-  const parsed = bookmarkPatchSchema.safeParse(body);
-  if (!parsed.success) return new NextResponse(null, { status: 400 });
+  const parsed = highlightPatchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid change." },
+      { status: 400 },
+    );
+  }
 
-  const bookmark = await prisma.bookmark
-    .update({
-      where: { id },
-      data: parsed.data,
-      // Never the cached article body — see the shelf fields in ../route.ts.
-      select: { id: true, url: true, title: true, favorite: true, shelf: true },
-    })
+  const highlight = await prisma.highlight
+    .update({ where: { id }, data: parsed.data })
     .catch(() => null);
-  if (!bookmark) return new NextResponse(null, { status: 404 });
-  return NextResponse.json(bookmark);
+  if (!highlight) return new NextResponse(null, { status: 404 });
+  return NextResponse.json(highlight);
 }
 
 export async function DELETE(
@@ -36,7 +36,7 @@ export async function DELETE(
   if (denied) return denied;
 
   const { id } = await params;
-  const deleted = await prisma.bookmark
+  const deleted = await prisma.highlight
     .delete({ where: { id } })
     .catch(() => null);
   if (!deleted) return new NextResponse(null, { status: 404 });

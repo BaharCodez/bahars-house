@@ -475,6 +475,51 @@ body {
   margin: 2rem auto;
   width: 40%;
 }
+
+/* ---- The reading desk ---------------------------------------------------
+   An article pulled in from elsewhere, marked up as you read it. Three tints:
+   green = could explain it, amber = half there, red = lost me. A pencil after
+   a mark means there's a note on it — drawn with ::after so it never lands in
+   the text nodes the highlight offsets are counted from. */
+.reader-body {
+  /* The selection colour is the point of the page — make it obvious. */
+  cursor: text;
+}
+.reader-body p.reader-li {
+  position: relative;
+  margin: 0.4rem 0;
+  padding-left: 1.3rem;
+}
+.reader-body p.reader-li::before {
+  content: "•";
+  position: absolute;
+  left: 0.4rem;
+  color: var(--accent-2);
+}
+.reader-body pre {
+  white-space: pre-wrap;
+}
+.hl {
+  background: var(--hl-tint);
+  border-radius: 2px;
+  color: inherit;
+  padding: 0.05em 0;
+  cursor: pointer;
+}
+.hl-got {
+  --hl-tint: color-mix(in srgb, #4f9d5d 35%, transparent);
+}
+.hl-half {
+  --hl-tint: color-mix(in srgb, #d9a318 40%, transparent);
+}
+.hl-lost {
+  --hl-tint: color-mix(in srgb, #d1495b 35%, transparent);
+}
+.hl-note::after {
+  content: " ✎";
+  font-size: 0.75em;
+  opacity: 0.7;
+}
 /* Security system: red strobe + blinking banner while the alarm is tripped. */
 @keyframes alarm-strobe {
   0%,
