@@ -14,11 +14,14 @@
 [data-theme="cottage"] {
   color-scheme: light;
   --bg: #f3ede1;
-  --bg-2: #e7dcc8;
+  --bg-2: #e6dfd2;
   --surface: #fbf7f0;
   --ink: #221f19;
   --ink-soft: #544d3d;
-  --line: #c2b59a;
+  /* Warm grey, not khaki. --line draws the border on ~100 buttons and pills,
+     so its chroma is what the eye reads as "the buttons are yellow" — kept at
+     hue 37° for warmth but half the saturation of the paper. */
+  --line: #bab3a8;
   --accent: #3f5a3c; /* deep moss */
   --accent-ink: #fbf7f0;
   --accent-2: #8a4a2a; /* rust, for mono labels */
