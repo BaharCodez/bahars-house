@@ -305,7 +305,7 @@ export default async function NotesPage({
                 ← newer
               </Link>
             ) : (
-              <span className="text-ink-soft/40">← newer</span>
+              <span className="text-ink-soft">← newer</span>
             )}
             <span className="text-ink-soft/70 tracking-wider">
               page {current} of {totalPages}
@@ -318,7 +318,7 @@ export default async function NotesPage({
                 older →
               </Link>
             ) : (
-              <span className="text-ink-soft/40">older →</span>
+              <span className="text-ink-soft">older →</span>
             )}
           </nav>
         )}

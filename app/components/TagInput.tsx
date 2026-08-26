@@ -66,7 +66,7 @@ export default function TagInput({
                 e.stopPropagation();
                 removeAt(i);
               }}
-              className="text-ink-soft hover:text-ink -mr-0.5 leading-none"
+              className="text-ink hover:text-accent -mr-0.5 leading-none"
             >
               ×
             </button>

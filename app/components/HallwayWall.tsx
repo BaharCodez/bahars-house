@@ -41,7 +41,7 @@ function FrameControls({
         onClick={() => onEdit(frame)}
         aria-label={`Edit ${frame.title}`}
         title="rewrite this frame"
-        className="text-ink-soft hover:text-accent px-2 py-2 text-xs transition-colors"
+        className="text-ink hover:text-accent px-2 py-2 text-xs transition-colors"
       >
         ✎
       </button>
@@ -50,7 +50,7 @@ function FrameControls({
         onClick={() => onRemove(frame.id)}
         aria-label={`Take down ${frame.title}`}
         title="take this frame down"
-        className="text-ink-soft px-2 py-2 text-xs transition-colors hover:text-[#9B4E2E]"
+        className="text-ink px-2 py-2 text-xs transition-colors hover:text-[#9B4E2E]"
       >
         ✕
       </button>

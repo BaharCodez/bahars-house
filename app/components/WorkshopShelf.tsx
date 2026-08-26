@@ -189,7 +189,7 @@ export default function WorkshopShelf({
                 onClick={() => startEdit(openFrame)}
                 aria-label={`Edit ${openFrame.title}`}
                 title="rewrite this one"
-                className="text-ink-soft hover:text-accent flex h-6 w-6 items-center justify-center rounded-full border-2 border-current bg-[var(--surface)] text-xs transition-colors"
+                className="text-ink hover:text-accent flex h-6 w-6 items-center justify-center rounded-full border-2 border-current bg-[var(--surface)] text-xs transition-colors"
               >
                 ✎
               </button>
@@ -198,7 +198,7 @@ export default function WorkshopShelf({
                 onClick={() => removeBook(openFrame.id)}
                 aria-label={`Take ${openFrame.title} off the shelf`}
                 title="take it off the shelf"
-                className="text-ink-soft flex h-6 w-6 items-center justify-center rounded-full border-2 border-current bg-[var(--surface)] text-xs transition-colors hover:text-red-500"
+                className="text-ink flex h-6 w-6 items-center justify-center rounded-full border-2 border-current bg-[var(--surface)] text-xs transition-colors hover:text-red-500"
               >
                 ✕
               </button>

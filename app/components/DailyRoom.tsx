@@ -456,7 +456,7 @@ export default function DailyRoom({
           type="button"
           onClick={() => removeBookmark(b)}
           title="remove from the shelf"
-          className="text-ink-soft hover:text-ink shrink-0 text-sm"
+          className="text-ink hover:text-accent shrink-0 text-sm"
         >
           ×
         </button>
