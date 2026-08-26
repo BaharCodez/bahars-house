@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { actorUserId, requireOwner } from "@/app/lib/session";
+import { actorUserId, currentUserId, requireOwner } from "@/app/lib/session";
 
 // The signed-in user's reading position in this book (synced across devices).
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await actorUserId();
+  // currentUserId, not actorUserId: the owner fallback meant an anonymous
+  // visitor opening a book resumed from the owner's position, quietly leaking
+  // how far she'd read. No session, no saved spot — the book opens at page one.
+  const userId = await currentUserId();
   if (!userId) return NextResponse.json({ cfi: null });
 
   const { id } = await params;
