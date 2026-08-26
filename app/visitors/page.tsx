@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { prisma } from "@/app/lib/prisma";
@@ -65,15 +66,39 @@ function List({
   );
 }
 
-export default async function VisitorsPage() {
+// One screenful of history at a time — the log grows forever, so never render
+// all of it. Older visits are reachable via ?page=.
+const PER_PAGE = 50;
+
+export default async function VisitorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await connection();
   // Hidden + owner-only: even with the URL, non-owners get a 404.
   if (!(await isOwner())) notFound();
 
-  const [total, recent, uniq, byCountry, byPage, byRef] = await Promise.all([
+  const page = Math.max(
+    1,
+    Number.parseInt((await searchParams).page ?? "1", 10) || 1,
+  );
+  const skip = (page - 1) * PER_PAGE;
+
+  const [total, recent, totals, byCountry, byPage, byRef] = await Promise.all([
     prisma.visit.count(),
-    prisma.visit.findMany({ orderBy: { createdAt: "desc" }, take: 120 }),
-    prisma.visit.findMany({ distinct: ["ipHash"], select: { ipHash: true } }),
+    prisma.visit.findMany({
+      orderBy: { createdAt: "desc" },
+      take: PER_PAGE,
+      skip,
+    }),
+    // Counted in the database — pulling every distinct ipHash into the page
+    // grew with the visitor log and would eventually time out.
+    prisma.$queryRaw<{ visitors: bigint; countries: bigint }[]>`
+      SELECT COUNT(DISTINCT NULLIF("ipHash", '')) AS visitors,
+             COUNT(DISTINCT NULLIF("country", '')) AS countries
+      FROM "Visit"
+    `,
     prisma.visit.groupBy({
       by: ["country"],
       _count: { _all: true },
@@ -95,7 +120,9 @@ export default async function VisitorsPage() {
     }),
   ]);
 
-  const uniqueCount = uniq.filter((u) => u.ipHash).length;
+  const uniqueCount = Number(totals[0]?.visitors ?? 0);
+  const countryCount = Number(totals[0]?.countries ?? 0);
+  const lastPage = Math.max(1, Math.ceil(total / PER_PAGE));
 
   return (
     <div className="fade-up mx-auto w-full max-w-3xl px-6 py-12 sm:px-8">
@@ -111,7 +138,7 @@ export default async function VisitorsPage() {
       <div className="mt-8 grid grid-cols-3 gap-3">
         <Stat n={total} label="page views" />
         <Stat n={uniqueCount} label="unique visitors" />
-        <Stat n={byCountry.filter((c) => c.country).length} label="countries" />
+        <Stat n={countryCount} label="countries" />
       </div>
 
       <div className="mt-10 grid gap-8 sm:grid-cols-3">
@@ -132,13 +159,21 @@ export default async function VisitorsPage() {
         />
       </div>
 
-      <h2 className="text-accent-2 mt-12 mb-3 font-mono text-xs tracking-[0.2em] uppercase">
-        recent visits
-      </h2>
+      <div className="mt-12 mb-3 flex items-baseline justify-between gap-4">
+        <h2 className="text-accent-2 font-mono text-xs tracking-[0.2em] uppercase">
+          recent visits
+        </h2>
+        <span className="text-ink-soft font-mono text-[11px]">
+          {total > 0 &&
+            `${skip + 1}–${Math.min(skip + PER_PAGE, total)} of ${total}`}
+        </span>
+      </div>
       <div className="border-line divide-line divide-y rounded-sm border">
         {recent.length === 0 && (
           <p className="text-ink-soft p-4 text-sm italic">
-            No visits logged yet. Share the link and watch them roll in.
+            {total === 0
+              ? "No visits logged yet. Share the link and watch them roll in."
+              : "Nothing on this page — you've reached the end of the log."}
           </p>
         )}
         {recent.map((v) => (
@@ -158,6 +193,34 @@ export default async function VisitorsPage() {
           </div>
         ))}
       </div>
+
+      {lastPage > 1 && (
+        <nav className="mt-4 flex items-center justify-between font-mono text-xs">
+          {page > 1 ? (
+            <Link
+              href={page === 2 ? "/visitors" : `/visitors?page=${page - 1}`}
+              className="text-accent-2 hover:underline"
+            >
+              ← newer
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-ink-soft">
+            page {page} of {lastPage}
+          </span>
+          {page < lastPage ? (
+            <Link
+              href={`/visitors?page=${page + 1}`}
+              className="text-accent-2 hover:underline"
+            >
+              older →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
     </div>
   );
 }
