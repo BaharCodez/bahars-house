@@ -6,7 +6,7 @@ export interface Theme {
 }
 
 export const THEMES: Theme[] = [
-  { id: "cottage", label: "Cottage", swatch: "#33513a" },
+  { id: "cottage", label: "Cottage", swatch: "#3f5a3c" },
   { id: "meadow", label: "Meadow", swatch: "#788a4f" },
   { id: "plantshop", label: "Plant Shop", swatch: "#6f8f4f" },
   { id: "sepia", label: "Sepia", swatch: "#a9713f" },

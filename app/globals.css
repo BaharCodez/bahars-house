@@ -4,23 +4,23 @@
    Each theme is a palette of CSS variables, selected by `data-theme` on
    <html>. Cottagecore bookshop vibes: buttermilk, moss, terracotta, wood. */
 
-/* The Cottage — cool sage paper, deep moss, warm wood. The house's default.
-   Low on yellow, but deliberately NOT monochrome: the base is a cool sage and
-   the mono labels are rust, so there's hue contrast pulling against the moss
-   as well as luminance contrast. A base in the same family as the accent
-   measures fine and still reads flat. Every pair here beats the original
-   parchment palette on contrast. */
+/* The Cottage — warm cream paper, deep moss, rust. The house's default.
+   The paper is warm on purpose: a sage base put the whole house in the same
+   hue family as the moss accent, which read cold and slightly clinical. The
+   contrast comes from the ink being genuinely dark and the mono labels being
+   rust, not from draining the warmth out of the background — every text pair
+   below clears WCAG AA on the cream just as it did on the sage. */
 :root,
 [data-theme="cottage"] {
   color-scheme: light;
-  --bg: #e9ede4;
-  --bg-2: #d6ddcd;
-  --surface: #f7faf4;
-  --ink: #171c16;
-  --ink-soft: #4a5246;
-  --line: #b4bfae;
-  --accent: #33513a; /* deep moss */
-  --accent-ink: #f7faf4;
+  --bg: #f3ede1;
+  --bg-2: #e7dcc8;
+  --surface: #fbf7f0;
+  --ink: #221f19;
+  --ink-soft: #544d3d;
+  --line: #c2b59a;
+  --accent: #3f5a3c; /* deep moss */
+  --accent-ink: #fbf7f0;
   --accent-2: #8a4a2a; /* rust, for mono labels */
   --shelf: #c69e66;
   --shelf-edge: #9a7342;

@@ -76,7 +76,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // Matches the default (cottage) theme's --bg so the browser chrome blends in.
-  themeColor: "#e9ede4",
+  themeColor: "#f3ede1",
   // Keep the layout sane inside the standalone web-app shell.
   width: "device-width",
   initialScale: 1,
