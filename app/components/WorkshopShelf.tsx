@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Frame } from "@/app/components/HallwayWall";
 
@@ -75,6 +75,16 @@ export default function WorkshopShelf({
   const [error, setError] = useState<string | null>(null);
 
   const openFrame = frames.find((f) => f.id === openId) ?? null;
+  const formRef = useRef<HTMLFormElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  // Same reason as the hallway wall: the editor sits below the shelf, so scroll
+  // to it and take the cursor there when it opens.
+  useEffect(() => {
+    if (!adding) return;
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    titleRef.current?.focus({ preventScroll: true });
+  }, [adding, editingId]);
 
   function startEdit(frame: Frame) {
     setForm({
@@ -233,6 +243,7 @@ export default function WorkshopShelf({
         <div className="mt-6">
           {adding ? (
             <form
+              ref={formRef}
               onSubmit={shelveBook}
               className="pixel-frame bg-surface space-y-3 p-4"
             >
@@ -240,6 +251,7 @@ export default function WorkshopShelf({
                 {editingId ? "rewrite this one" : "shelve a project"}
               </h3>
               <input
+                ref={titleRef}
                 className={field}
                 placeholder="Title (e.g. plant waterer, CHIP-8 emulator)"
                 value={form.title}

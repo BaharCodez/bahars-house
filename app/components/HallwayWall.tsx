@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -33,13 +33,15 @@ function FrameControls({
   onRemove: (id: string) => void;
 }) {
   return (
-    <span className="ml-2 flex shrink-0 gap-1">
+    <span className="ml-2 flex shrink-0 items-center">
+      {/* Roomy padding, not a bigger glyph: a bare ✎ is a ~12px tap target,
+          which is a coin toss on a phone. */}
       <button
         type="button"
         onClick={() => onEdit(frame)}
         aria-label={`Edit ${frame.title}`}
         title="rewrite this frame"
-        className="text-ink-soft hover:text-accent text-xs transition-colors"
+        className="text-ink-soft hover:text-accent px-2 py-2 text-xs transition-colors"
       >
         ✎
       </button>
@@ -48,7 +50,7 @@ function FrameControls({
         onClick={() => onRemove(frame.id)}
         aria-label={`Take down ${frame.title}`}
         title="take this frame down"
-        className="text-ink-soft text-xs transition-colors hover:text-[#9B4E2E]"
+        className="text-ink-soft px-2 py-2 text-xs transition-colors hover:text-[#9B4E2E]"
       >
         ✕
       </button>
@@ -160,6 +162,18 @@ export default function HallwayWall({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  // The editor lives at the foot of the wall, well below the frame you clicked
+  // ✎ on — so bring it into view and put the cursor in it. Without this the
+  // edit button looks broken: the form opens off-screen and nothing seems to
+  // happen.
+  useEffect(() => {
+    if (!adding) return;
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    titleRef.current?.focus({ preventScroll: true });
+  }, [adding, editingId]);
 
   const visible = filter
     ? frames.filter((f) => f.tags?.includes(filter))
@@ -326,6 +340,7 @@ export default function HallwayWall({
         <div className="mt-12">
           {adding ? (
             <form
+              ref={formRef}
               onSubmit={hangFrame}
               className="border-line bg-surface space-y-3 rounded-sm border p-4"
             >
@@ -346,6 +361,7 @@ export default function HallwayWall({
                 </select>
               </div>
               <input
+                ref={titleRef}
                 className={field}
                 placeholder="Title (e.g. UserTesting — QA Engineer, or ESP32 plant waterer)"
                 value={form.title}
