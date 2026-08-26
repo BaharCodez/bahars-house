@@ -82,12 +82,16 @@ model Book {
 }
 
 model Annotation {
-  id        String   @id @default(cuid())
-  bookId    String
-  userId    String
-  cfiRange  String
-  text      String
-  comment   String
+  id       String @id @default(cuid())
+  bookId   String
+  userId   String
+  cfiRange String
+  text     String
+  comment  String
+  // What kind of passage this is: "idea" | "definition" | "example" |
+  // "question". Books ask what a passage *is*; the daily room's Highlight.grasp
+  // asks how well you understood it. Two vocabularies, one mechanism.
+  kind      String   @default("idea")
   createdAt DateTime @default(now())
 
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)

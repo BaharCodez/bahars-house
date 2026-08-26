@@ -9,11 +9,31 @@ export const signupSchema = credentialsSchema.extend({
   name: z.string().min(1, "Please enter your name.").trim(),
 });
 
+// What kind of passage a book highlight is. Deliberately four options and no
+// more: the point is to categorise in one tap without breaking your reading.
+export const annotationKindSchema = z.enum([
+  "idea",
+  "definition",
+  "example",
+  "question",
+]);
+
 export const annotationInputSchema = z.object({
   cfiRange: z.string().min(1),
   text: z.string().min(1),
   comment: z.string().max(5000).default(""),
+  kind: annotationKindSchema.default("idea"),
 });
+
+// Re-categorising a mark, or writing its note, after the fact.
+export const annotationPatchSchema = z
+  .object({
+    kind: annotationKindSchema.optional(),
+    comment: z.string().max(5000).optional(),
+  })
+  .refine((v) => v.kind !== undefined || v.comment !== undefined, {
+    message: "Nothing to change.",
+  });
 
 // Freeform topic labels: trimmed, de-duplicated (case-insensitive), capped.
 export const tagsSchema = z

@@ -538,6 +538,22 @@ body {
 .hl-lost {
   --hl-tint: color-mix(in srgb, #d1495b 35%, transparent);
 }
+/* Book marks. Same .hl mechanism as the article highlights above, different
+   vocabulary: the daily room asks how well you grasped a passage, a book asks
+   what the passage *is*. Kept in step with KIND_META in Reader.tsx, which
+   feeds the same hues to epub.js for the in-book highlight fills. */
+.hl-idea {
+  --hl-tint: color-mix(in srgb, #d9a318 40%, transparent);
+}
+.hl-definition {
+  --hl-tint: color-mix(in srgb, #4f7fd1 32%, transparent);
+}
+.hl-example {
+  --hl-tint: color-mix(in srgb, #4f9d5d 35%, transparent);
+}
+.hl-question {
+  --hl-tint: color-mix(in srgb, #9a6cc4 35%, transparent);
+}
 .hl-note::after {
   content: " ✎";
   font-size: 0.75em;

@@ -1,7 +1,12 @@
 // Thin client for the reading API. All calls hit same-origin route handlers
 // that authorize against the signed-in session.
 
-import type { Annotation, AnnotationInput, BookMeta } from "./types";
+import type {
+  Annotation,
+  AnnotationInput,
+  AnnotationKind,
+  BookMeta,
+} from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -56,6 +61,20 @@ export async function createAnnotation(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
+    }),
+  );
+}
+
+// Re-categorise a mark, or write its note, after the fact.
+export async function patchAnnotation(
+  id: string,
+  patch: { kind?: AnnotationKind; comment?: string },
+): Promise<Annotation> {
+  return json<Annotation>(
+    await fetch(`/api/annotations/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
     }),
   );
 }

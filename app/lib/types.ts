@@ -20,11 +20,16 @@ export interface BookMeta {
 }
 
 // A margin note as returned by the API — carries who wrote it.
+// What kind of passage a mark is. Books categorise by *what a passage is*;
+// the daily room's article highlights categorise by how well you grasped it.
+export type AnnotationKind = "idea" | "definition" | "example" | "question";
+
 export interface Annotation {
   id: string;
   cfiRange: string;
   text: string;
   comment: string;
+  kind: AnnotationKind;
   createdAt: number;
   authorId: string;
   authorName: string;
@@ -37,4 +42,5 @@ export interface AnnotationInput {
   cfiRange: string;
   text: string;
   comment: string;
+  kind: AnnotationKind;
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { actorUserId, requireOwner } from "@/app/lib/session";
+import { actorUserId, currentUserId, requireOwner } from "@/app/lib/session";
 import { annotationInputSchema } from "@/app/lib/validation";
 
 // Everyone reading a book sees everyone's notes — visitors included; only
@@ -9,7 +9,10 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await actorUserId();
+  // currentUserId, not actorUserId: the owner fallback would mark the owner's
+  // notes as `mine` for anonymous visitors, showing them delete buttons that
+  // can only ever 403.
+  const userId = await currentUserId();
 
   const { id } = await params;
   const annotations = await prisma.annotation.findMany({
@@ -20,6 +23,7 @@ export async function GET(
       cfiRange: true,
       text: true,
       comment: true,
+      kind: true,
       createdAt: true,
       userId: true,
       user: { select: { name: true, image: true } },
@@ -32,6 +36,7 @@ export async function GET(
       cfiRange: a.cfiRange,
       text: a.text,
       comment: a.comment,
+      kind: a.kind,
       createdAt: a.createdAt.getTime(),
       authorId: a.userId,
       authorName: a.user.name ?? "Anonymous",
@@ -70,6 +75,7 @@ export async function POST(
       cfiRange: true,
       text: true,
       comment: true,
+      kind: true,
       createdAt: true,
       userId: true,
       user: { select: { name: true, image: true } },
@@ -82,6 +88,7 @@ export async function POST(
       cfiRange: created.cfiRange,
       text: created.text,
       comment: created.comment,
+      kind: created.kind,
       createdAt: created.createdAt.getTime(),
       authorId: created.userId,
       authorName: created.user.name ?? "Anonymous",

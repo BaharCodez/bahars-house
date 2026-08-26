@@ -10,9 +10,10 @@ import {
   fetchProgress,
   fetchRoadmapStepsForBook,
   markRoadmapStepsRead,
+  patchAnnotation,
   saveProgress,
 } from "@/app/lib/api";
-import type { Annotation } from "@/app/lib/types";
+import type { Annotation, AnnotationKind } from "@/app/lib/types";
 import ThemePicker from "./ThemePicker";
 import AmbientMusic from "./AmbientMusic";
 
@@ -33,7 +34,28 @@ interface PendingSelection {
 // How often we poll for notes other readers have added.
 const POLL_MS = 5000;
 
-const MINE_STYLE = { fill: "#fbbf24", "fill-opacity": "0.35" };
+// The four kinds of mark. Plain words, one glyph each, and no more than four —
+// categorising has to be a single tap you can make without losing the thread
+// of the sentence you're reading.
+export const KIND_META: Record<
+  AnnotationKind,
+  { label: string; glyph: string; fill: string }
+> = {
+  idea: { label: "key idea", glyph: "💡", fill: "#d9a318" },
+  definition: { label: "definition", glyph: "📖", fill: "#4f7fd1" },
+  example: { label: "example", glyph: "🔧", fill: "#4f9d5d" },
+  question: { label: "question", glyph: "❓", fill: "#9a6cc4" },
+};
+
+export const KIND_ORDER: AnnotationKind[] = [
+  "idea",
+  "definition",
+  "example",
+  "question",
+];
+
+// Someone else's note stays one neutral colour: their categories are theirs,
+// and mixing them into your own palette would make the wall of colour lie.
 const OTHERS_STYLE = { fill: "#60a5fa", "fill-opacity": "0.30" };
 
 // Flatten the (possibly nested) EPUB table of contents into a list with depth.
@@ -113,6 +135,7 @@ function addHighlight(
   rendition: Rendition,
   cfiRange: string,
   mine: boolean,
+  kind: AnnotationKind,
   onClick: () => void,
 ) {
   rendition.annotations.add(
@@ -121,7 +144,9 @@ function addHighlight(
     {},
     onClick,
     "sr-highlight",
-    mine ? MINE_STYLE : OTHERS_STYLE,
+    mine
+      ? { fill: KIND_META[kind].fill, "fill-opacity": "0.35" }
+      : OTHERS_STYLE,
   );
 }
 
@@ -144,18 +169,27 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
   const bookRef = useRef<Book | null>(null);
   // Annotation ids whose highlights are currently drawn, so we only add/remove
   // the delta when the list changes (own saves or friends' notes via polling).
-  const drawnRef = useRef<Map<string, string>>(new Map());
+  // The kind is tracked too: re-categorising a mark changes its colour, which
+  // means removing and re-adding it even though the id hasn't changed.
+  const drawnRef = useRef<Map<string, { cfiRange: string; kind: string }>>(
+    new Map(),
+  );
 
   const [title, setTitle] = useState("Reading…");
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
-  const [pending, setPending] = useState<PendingSelection | null>(null);
-  // The current text selection, before the reader commits to writing a note.
-  // Shown as a floating "Add note" pill so we never open the composer (and
-  // the keyboard) mid-selection — on iOS that collapses the selection.
+  // The current text selection, before it's been categorised. Shown as a row
+  // of one-tap kind buttons — buttons, not a text composer, so the keyboard
+  // never opens mid-selection (on iOS that collapses the selection).
   const [candidate, setCandidate] = useState<PendingSelection | null>(null);
+  // The mark whose note is being written. The mark itself already exists by
+  // then: categorising saves it, and the note is an optional afterthought.
+  const [noteFor, setNoteFor] = useState<Annotation | null>(null);
   const [draft, setDraft] = useState("");
+  // Which kind the notes panel is filtered to — the review side of the
+  // feature, and the reason categorising is worth the tap.
+  const [kindFilter, setKindFilter] = useState<AnnotationKind | null>(null);
   // The note shown when you tap a highlight in the book.
   const [activeNote, setActiveNote] = useState<Annotation | null>(null);
   const [copied, setCopied] = useState(false);
@@ -678,21 +712,24 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
     if (!rendition || !ready) return;
 
     const drawn = drawnRef.current;
-    const next = new Set(annotations.map((a) => a.id));
+    const byId = new Map(annotations.map((a) => [a.id, a]));
 
-    // Remove highlights for notes that are gone.
-    for (const [id, cfiRange] of drawn) {
-      if (!next.has(id)) {
-        rendition.annotations.remove(cfiRange, "highlight");
+    // Remove highlights for notes that are gone, or whose kind changed (the
+    // colour is baked in at draw time, so it has to be redrawn).
+    for (const [id, at] of drawn) {
+      const a = byId.get(id);
+      if (!a || a.kind !== at.kind) {
+        rendition.annotations.remove(at.cfiRange, "highlight");
         drawn.delete(id);
       }
     }
-    // Add highlights for notes we haven't drawn yet. Tapping a highlight
-    // shows that note's comment.
+    // Add highlights we haven't drawn yet. Tapping one shows that note.
     for (const a of annotations) {
       if (!drawn.has(a.id)) {
-        addHighlight(rendition, a.cfiRange, a.mine, () => setActiveNote(a));
-        drawn.set(a.id, a.cfiRange);
+        addHighlight(rendition, a.cfiRange, a.mine, a.kind, () =>
+          setActiveNote(a),
+        );
+        drawn.set(a.id, { cfiRange: a.cfiRange, kind: a.kind });
       }
     }
   }, [annotations, ready]);
@@ -720,22 +757,61 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [goPrev, goNext]);
 
-  async function saveComment() {
-    if (!pending) return;
-    const selection = pending;
-    const comment = draft.trim();
-    setPending(null);
-    setDraft("");
+  // Categorising *is* saving: one tap turns the selection into a mark. The
+  // note box then opens for that mark, but writing one is optional — you can
+  // ignore it and read on.
+  async function markSelection(kind: AnnotationKind) {
+    if (!candidate) return;
+    const selection = candidate;
+    setCandidate(null);
     try {
       const created = await createAnnotation(bookId, {
         cfiRange: selection.cfiRange,
         text: selection.text,
-        comment,
+        comment: "",
+        kind,
       });
       setAnnotations((prev) => [...prev, created]);
+      setNoteFor(created);
+      setDraft("");
+      setPanelOpen(true);
+    } catch (e) {
+      console.error(e);
+      setError("Couldn't save that mark.");
+    }
+  }
+
+  // Write (or clear) the note on the mark currently in the note box.
+  async function saveNote() {
+    if (!noteFor) return;
+    const target = noteFor;
+    const comment = draft.trim();
+    setNoteFor(null);
+    setDraft("");
+    if (comment === target.comment) return;
+    try {
+      const updated = await patchAnnotation(target.id, { comment });
+      setAnnotations((prev) =>
+        prev.map((a) => (a.id === updated.id ? updated : a)),
+      );
     } catch (e) {
       console.error(e);
       setError("Couldn't save your note.");
+    }
+  }
+
+  // Change a mark's kind — the colour in the margin follows.
+  async function recategorise(a: Annotation, kind: AnnotationKind) {
+    if (a.kind === kind) return;
+    setAnnotations((prev) =>
+      prev.map((x) => (x.id === a.id ? { ...x, kind } : x)),
+    );
+    setActiveNote((n) => (n?.id === a.id ? { ...n, kind } : n));
+    try {
+      await patchAnnotation(a.id, { kind });
+    } catch (e) {
+      console.error(e);
+      setError("Couldn't change that mark.");
     }
   }
 
@@ -751,6 +827,10 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
   function jumpTo(cfiRange: string) {
     renditionRef.current?.display(cfiRange);
   }
+
+  const shownNotes = kindFilter
+    ? annotations.filter((a) => a.kind === kindFilter)
+    : annotations;
 
   async function share() {
     try {
@@ -849,7 +929,7 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
             <span className="font-serif text-sm font-medium">Chapters</span>
             <button
               onClick={() => setChaptersOpen(false)}
-              className="text-ink-soft hover:text-ink text-sm"
+              className="text-ink hover:text-accent text-sm"
             >
               ✕
             </button>
@@ -882,14 +962,14 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
                 <button
                   onClick={goPrev}
                   aria-label="Previous page"
-                  className="text-ink-soft/60 hover:text-ink absolute top-0 left-0 z-30 flex h-full w-[15%] items-center justify-start pl-1 text-3xl select-none [-webkit-touch-callout:none]"
+                  className="text-ink/70 hover:text-ink absolute top-0 left-0 z-30 flex h-full w-[15%] items-center justify-start pl-1 text-3xl select-none [-webkit-touch-callout:none]"
                 >
                   ‹
                 </button>
                 <button
                   onClick={goNext}
                   aria-label="Next page"
-                  className="text-ink-soft/60 hover:text-ink absolute top-0 right-0 z-30 flex h-full w-[15%] items-center justify-end pr-1 text-3xl select-none [-webkit-touch-callout:none]"
+                  className="text-ink/70 hover:text-ink absolute top-0 right-0 z-30 flex h-full w-[15%] items-center justify-end pr-1 text-3xl select-none [-webkit-touch-callout:none]"
                 >
                   ›
                 </button>
@@ -906,20 +986,34 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
               </p>
             )}
 
-            {/* selection made → floating pill; tapping it opens the composer.
-                (Deliberately not automatic: opening the sheet + keyboard
-                mid-selection collapses the selection on iOS.) */}
-            {candidate && !pending && (
-              <button
-                onClick={() => {
-                  setPending(candidate);
-                  setCandidate(null);
-                  setPanelOpen(true);
-                }}
-                className="bg-accent text-accent-ink absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium shadow-lg select-none [-webkit-touch-callout:none] hover:opacity-90"
-              >
-                💬 Add note
-              </button>
+            {/* selection made → "what is this?" — four one-tap kinds. Buttons
+                only: opening a text composer (and the keyboard) mid-selection
+                collapses the selection on iOS. */}
+            {candidate && (
+              <div className="border-line bg-surface absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-2xl border p-2 shadow-xl select-none [-webkit-touch-callout:none]">
+                <p className="text-ink-soft px-1 pb-1.5 text-center font-mono text-[10px] tracking-[0.15em] uppercase">
+                  what is this?
+                </p>
+                <div className="flex gap-1">
+                  {KIND_ORDER.map((k) => (
+                    <button
+                      key={k}
+                      onClick={() => markSelection(k)}
+                      title={`Mark as ${KIND_META[k].label}`}
+                      className={`hl hl-${k} text-ink flex w-[4.5rem] flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-[11px] leading-tight`}
+                    >
+                      <span className="text-base">{KIND_META[k].glyph}</span>
+                      {KIND_META[k].label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCandidate(null)}
+                  className="text-ink-soft hover:text-ink mt-1 w-full text-center font-mono text-[10px]"
+                >
+                  never mind
+                </button>
+              </div>
             )}
 
             {/* tap a highlight → show that note's comment */}
@@ -936,7 +1030,7 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
                   <button
                     onClick={() => setActiveNote(null)}
                     aria-label="Close"
-                    className="text-ink-soft hover:text-ink shrink-0"
+                    className="text-ink hover:text-accent shrink-0"
                   >
                     ✕
                   </button>
@@ -948,9 +1042,43 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
                     No note on this highlight.
                   </p>
                 )}
-                <p className="text-ink-soft mt-2 text-xs">
-                  — {activeNote.mine ? "You" : activeNote.authorName}
-                </p>
+                {/* Change your mind about what a passage is — tap another kind. */}
+                {activeNote.mine && (
+                  <div className="mt-2 flex gap-1">
+                    {KIND_ORDER.map((k) => (
+                      <button
+                        key={k}
+                        onClick={() => recategorise(activeNote, k)}
+                        title={`Mark as ${KIND_META[k].label}`}
+                        className={`flex-1 rounded-md px-1 py-1 text-[10px] leading-tight transition-colors ${
+                          activeNote.kind === k
+                            ? `hl hl-${k} text-ink ring-accent ring-1`
+                            : "text-ink hover:bg-bg"
+                        }`}
+                      >
+                        {KIND_META[k].glyph} {KIND_META[k].label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-ink-soft text-xs">
+                    — {activeNote.mine ? "You" : activeNote.authorName}
+                  </p>
+                  {activeNote.mine && (
+                    <button
+                      onClick={() => {
+                        setNoteFor(activeNote);
+                        setDraft(activeNote.comment);
+                        setActiveNote(null);
+                        setPanelOpen(true);
+                      }}
+                      className="text-ink hover:text-accent font-mono text-[11px]"
+                    >
+                      {activeNote.comment ? "edit note" : "add a note"} →
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -976,47 +1104,107 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
           >
             ▾ Close notes
           </button>
-          {pending && (
+          {noteFor && (
             <div className="border-line border-b p-4">
+              <p className="text-ink-soft mb-2 text-[11px]">
+                <span
+                  className={`hl hl-${noteFor.kind} text-ink px-1.5 py-0.5`}
+                >
+                  {KIND_META[noteFor.kind].glyph}{" "}
+                  {KIND_META[noteFor.kind].label}
+                </span>{" "}
+                saved
+              </p>
               <p className="border-accent text-ink-soft mb-2 border-l-2 pl-2 text-sm italic">
-                “{pending.text}”
+                “{noteFor.text}”
               </p>
               <textarea
                 autoFocus
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Add a note in the margin…"
+                placeholder={
+                  noteFor.kind === "question"
+                    ? "what don't you understand yet?"
+                    : noteFor.kind === "definition"
+                      ? "say it back in your own words…"
+                      : "why does this matter? (optional)"
+                }
                 className="border-line text-ink focus:border-accent h-20 w-full resize-none rounded-md border bg-transparent p-2 text-sm outline-none"
               />
-              <div className="mt-2 flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setPending(null);
-                    setDraft("");
-                  }}
-                  className="text-ink-soft hover:text-ink rounded-md px-3 py-1.5 text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveComment}
-                  className="bg-accent text-accent-ink rounded-full px-3 py-1.5 text-sm font-medium hover:opacity-90"
-                >
-                  Save
-                </button>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-ink-soft font-mono text-[10px]">
+                  the mark is already saved
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setNoteFor(null);
+                      setDraft("");
+                    }}
+                    className="text-ink hover:text-accent rounded-md px-2 py-1.5 text-sm"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={saveNote}
+                    className="bg-accent text-accent-ink rounded-full px-3 py-1.5 text-sm font-medium hover:opacity-90"
+                  >
+                    Save note
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
+          {/* Review by kind: the payoff for categorising as you read. */}
+          {annotations.length > 0 && (
+            <div className="border-line flex flex-wrap gap-1 border-b px-4 py-2">
+              <button
+                onClick={() => setKindFilter(null)}
+                className={`rounded-full px-2 py-1 font-mono text-[10px] transition-colors ${
+                  kindFilter === null
+                    ? "bg-accent text-accent-ink"
+                    : "border-line text-ink hover:bg-bg border"
+                }`}
+              >
+                all {annotations.length}
+              </button>
+              {KIND_ORDER.map((k) => {
+                const n = annotations.filter((a) => a.kind === k).length;
+                return (
+                  <button
+                    key={k}
+                    onClick={() => setKindFilter(kindFilter === k ? null : k)}
+                    disabled={n === 0}
+                    className={`rounded-full px-2 py-1 font-mono text-[10px] transition-colors disabled:opacity-40 ${
+                      kindFilter === k
+                        ? `hl hl-${k} text-ink ring-accent ring-1`
+                        : "border-line text-ink hover:bg-bg border"
+                    }`}
+                  >
+                    {KIND_META[k].glyph} {n}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            {annotations.length === 0 && !pending ? (
+            {annotations.length === 0 && !noteFor ? (
               <p className="text-ink-soft text-sm">
-                Select any passage to highlight it and add a note. Notes are
-                shared with everyone reading this book.
+                Select any passage and say what it is — a key idea, a
+                definition, an example, or a question. One tap marks it; the
+                note is optional.
+              </p>
+            ) : shownNotes.length === 0 ? (
+              <p className="text-ink-soft text-sm italic">
+                {kindFilter
+                  ? `Nothing marked as ${KIND_META[kindFilter].label} yet.`
+                  : "No notes yet."}
               </p>
             ) : (
               <ul className="space-y-3">
-                {annotations.map((a) => (
+                {shownNotes.map((a) => (
                   <li
                     key={a.id}
                     className="group border-line bg-bg/40 rounded-lg border p-3"
@@ -1025,6 +1213,11 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
                       onClick={() => jumpTo(a.cfiRange)}
                       className="w-full text-left"
                     >
+                      <span
+                        className={`hl hl-${a.kind} text-ink mb-1.5 inline-block px-1.5 py-0.5 font-mono text-[10px]`}
+                      >
+                        {KIND_META[a.kind].glyph} {KIND_META[a.kind].label}
+                      </span>
                       <p
                         className={`text-ink-soft border-l-2 pl-2 text-sm ${
                           a.mine ? "border-accent" : "border-blue-400"
@@ -1041,14 +1234,25 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
                         {a.mine ? "You" : a.authorName}
                       </span>
                       {a.mine && (
-                        <button
-                          onClick={() => removeAnnotation(a)}
-                          aria-label="Delete note"
-                          title="Delete note"
-                          className="text-ink-soft text-base transition-colors hover:text-red-500"
-                        >
-                          🗑
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setNoteFor(a);
+                              setDraft(a.comment);
+                            }}
+                            className="text-ink hover:text-accent font-mono text-[11px]"
+                          >
+                            {a.comment ? "edit" : "note"}
+                          </button>
+                          <button
+                            onClick={() => removeAnnotation(a)}
+                            aria-label="Delete note"
+                            title="Delete note"
+                            className="text-base transition-colors hover:text-red-500"
+                          >
+                            🗑
+                          </button>
+                        </div>
                       )}
                     </div>
                   </li>
