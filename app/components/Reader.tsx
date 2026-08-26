@@ -138,16 +138,23 @@ function addHighlight(
   kind: AnnotationKind,
   onClick: () => void,
 ) {
-  rendition.annotations.add(
-    "highlight",
-    cfiRange,
-    {},
-    onClick,
-    "sr-highlight",
-    mine
-      ? { fill: KIND_META[kind].fill, "fill-opacity": "0.35" }
-      : OTHERS_STYLE,
-  );
+  // Fall back rather than trust the kind: it arrives as a bare string from the
+  // API, and an unrecognised one must not take the whole draw loop down with
+  // it — one weird row would leave every highlight in the book undrawn.
+  const fill = (KIND_META[kind] ?? KIND_META.idea).fill;
+  try {
+    rendition.annotations.add(
+      "highlight",
+      cfiRange,
+      {},
+      onClick,
+      "sr-highlight",
+      mine ? { fill, "fill-opacity": "0.35" } : OTHERS_STYLE,
+    );
+  } catch (e) {
+    // A CFI that no longer resolves (book re-uploaded, say) throws here.
+    console.error("Couldn't draw highlight", cfiRange, e);
+  }
 }
 
 export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
@@ -177,7 +184,12 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
 
   const [title, setTitle] = useState("Reading…");
   const [ready, setReady] = useState(false);
+  // Fatal: the book itself wouldn't open. Renders as an overlay across the
+  // reading area, so nothing else may use it — a failed save is not fatal.
   const [error, setError] = useState<string | null>(null);
+  // Transient: a write didn't land. Shown in the notes panel and dismissible,
+  // because the book is still perfectly readable.
+  const [notice, setNotice] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   // The current text selection, before it's been categorised. Shown as a row
   // of one-tap kind buttons — buttons, not a text composer, so the keyboard
@@ -771,13 +783,15 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
         comment: "",
         kind,
       });
+      setNotice(null);
       setAnnotations((prev) => [...prev, created]);
       setNoteFor(created);
       setDraft("");
       setPanelOpen(true);
     } catch (e) {
       console.error(e);
-      setError("Couldn't save that mark.");
+      setNotice("Couldn't save that mark — check your connection.");
+      setPanelOpen(true);
     }
   }
 
@@ -796,7 +810,8 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
       );
     } catch (e) {
       console.error(e);
-      setError("Couldn't save your note.");
+      setNotice("Couldn't save your note — check your connection.");
+      setPanelOpen(true);
     }
   }
 
@@ -811,7 +826,8 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
       await patchAnnotation(a.id, { kind });
     } catch (e) {
       console.error(e);
-      setError("Couldn't change that mark.");
+      setNotice("Couldn't change that mark — check your connection.");
+      setPanelOpen(true);
     }
   }
 
@@ -976,12 +992,12 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
               </>
             )}
             {!ready && !error && (
-              <p className="absolute inset-0 flex items-center justify-center text-sm text-zinc-400">
+              <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-zinc-400">
                 Opening book…
               </p>
             )}
             {error && (
-              <p className="absolute inset-0 flex items-center justify-center text-sm text-red-600 dark:text-red-400">
+              <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-red-600 dark:text-red-400">
                 {error}
               </p>
             )}
@@ -1104,6 +1120,18 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
           >
             ▾ Close notes
           </button>
+          {notice && (
+            <div className="border-line flex items-start justify-between gap-2 border-b px-4 py-2">
+              <p className="text-[11px] text-[#9B4E2E]">{notice}</p>
+              <button
+                onClick={() => setNotice(null)}
+                aria-label="Dismiss"
+                className="text-ink hover:text-accent shrink-0 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           {noteFor && (
             <div className="border-line border-b p-4">
               <p className="text-ink-soft mb-2 text-[11px]">
