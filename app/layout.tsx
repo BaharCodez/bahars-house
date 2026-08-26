@@ -7,6 +7,8 @@ import {
   Lora,
   Instrument_Sans,
   Courier_Prime,
+  Space_Grotesk,
+  Space_Mono,
 } from "next/font/google";
 import "./globals.css";
 import { isOwner } from "./lib/session";
@@ -56,6 +58,21 @@ const courier = Courier_Prime({
   subsets: ["latin"],
 });
 
+// The Space pair — Grotesk for everything set in sans, Mono for the small
+// caps-y labels. Grotesk is variable, so no weight list; Mono isn't, and it
+// ships exactly two weights with matching italics.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+});
+
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "bahar's house",
   description:
@@ -97,7 +114,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${pixelify.variable} ${lora.variable} ${instrument.variable} ${courier.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${pixelify.variable} ${lora.variable} ${instrument.variable} ${courier.variable} ${spaceGrotesk.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <head>
         {/* Apply the saved theme before paint to avoid a flash. */}
