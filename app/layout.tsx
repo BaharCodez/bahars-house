@@ -67,12 +67,16 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
+    // Both listed explicitly: setting `icons` at all overrides the app/icon.png
+    // file convention, so the browser-tab icon has to be named here too.
+    icon: "/icon.png",
     apple: "/apple-touch-icon.png",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#efe4c8",
+  // Matches the default (cottage) theme's --bg so the browser chrome blends in.
+  themeColor: "#e9ede4",
   // Keep the layout sane inside the standalone web-app shell.
   width: "device-width",
   initialScale: 1,

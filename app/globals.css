@@ -4,19 +4,24 @@
    Each theme is a palette of CSS variables, selected by `data-theme` on
    <html>. Cottagecore bookshop vibes: buttermilk, moss, terracotta, wood. */
 
-/* The Cottage — parchment, moss, ink-brown, rust. The house's default look. */
+/* The Cottage — cool sage paper, deep moss, warm wood. The house's default.
+   Low on yellow, but deliberately NOT monochrome: the base is a cool sage and
+   the mono labels are rust, so there's hue contrast pulling against the moss
+   as well as luminance contrast. A base in the same family as the accent
+   measures fine and still reads flat. Every pair here beats the original
+   parchment palette on contrast. */
 :root,
 [data-theme="cottage"] {
   color-scheme: light;
-  --bg: #f4ecd8;
-  --bg-2: #e8dac0;
-  --surface: #faf5ec;
-  --ink: #2a1f0e;
-  --ink-soft: #6b5a3e;
-  --line: #d4c5a0;
-  --accent: #3d5a3e; /* moss */
-  --accent-ink: #f4ecd8;
-  --accent-2: #5c7d5d; /* moss-light, for mono labels */
+  --bg: #e9ede4;
+  --bg-2: #d6ddcd;
+  --surface: #f7faf4;
+  --ink: #171c16;
+  --ink-soft: #4a5246;
+  --line: #b4bfae;
+  --accent: #33513a; /* deep moss */
+  --accent-ink: #f7faf4;
+  --accent-2: #8a4a2a; /* rust, for mono labels */
   --shelf: #c69e66;
   --shelf-edge: #9a7342;
 }
@@ -27,11 +32,11 @@
   --bg-2: #e7dabd;
   --surface: #fcf7ea;
   --ink: #4a4231;
-  --ink-soft: #8a7c5f;
+  --ink-soft: #695e48;
   --line: #ddd0b1;
-  --accent: #788a4f; /* moss */
+  --accent: #616f40; /* moss */
   --accent-ink: #fbf7ec;
-  --accent-2: #c0856a; /* terracotta */
+  --accent-2: #875139; /* terracotta */
   --shelf: #c69e66;
   --shelf-edge: #9a7342;
 }
@@ -43,11 +48,11 @@
   --bg-2: #e3d3ab;
   --surface: #f7efd9;
   --ink: #4a3f2a;
-  --ink-soft: #8a7550;
+  --ink-soft: #68583c;
   --line: #d8c6a0;
-  --accent: #6f8f4f; /* leaf */
+  --accent: #546c3c; /* leaf */
   --accent-ink: #f7efd9;
-  --accent-2: #b5683f; /* terracotta */
+  --accent-2: #854c2e; /* terracotta */
   --shelf: #a9743f;
   --shelf-edge: #7c4f29;
 }
@@ -72,11 +77,11 @@
   --bg-2: #e6d6b3;
   --surface: #faf3e1;
   --ink: #5b4a33;
-  --ink-soft: #9b8568;
+  --ink-soft: #6a5a46;
   --line: #ddccab;
-  --accent: #a9713f; /* rust */
+  --accent: #8a5c34; /* rust */
   --accent-ink: #faf3e1;
-  --accent-2: #8a7b4f;
+  --accent-2: #675c3b;
   --shelf: #c79a5c;
   --shelf-edge: #8f6a3a;
 }
@@ -108,7 +113,7 @@
   --line: #423747;
   --accent: #d98a52; /* sunset rust */
   --accent-ink: #241d28;
-  --accent-2: #b06a86; /* dusk rose */
+  --accent-2: #bc8198; /* dusk rose */
   --shelf: #6b4f3f;
   --shelf-edge: #43302a;
 }
@@ -126,6 +131,24 @@
   --accent-2: #d8a98a;
   --shelf: #5a4a36;
   --shelf-edge: #3a2f22;
+}
+
+/* The sidebar / mobile bar is dark walnut in every theme, so the page palette
+   doesn't apply inside it — `text-ink-soft` on parchment is unreadable on wood.
+   Re-point the tokens to a chrome palette here and every child component
+   (music button, theme picker) picks up readable colours automatically.
+   Values chosen to clear WCAG AA 4.5:1 on both the wood and the moss fill. */
+.sidebar-chrome {
+  color-scheme: dark;
+  --bg: #2a1f0e; /* wood */
+  --bg-2: #211907;
+  --surface: #3d5a3e; /* moss — hover / active fill */
+  --ink: #f4ecd8;
+  --ink-soft: #c7d8bf;
+  --line: #5c8560;
+  --accent: #3d5a3e;
+  --accent-ink: #f4ecd8;
+  --accent-2: #c7d8bf;
 }
 
 @theme inline {

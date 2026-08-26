@@ -77,13 +77,13 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
     <nav className="flex h-full flex-col justify-between px-5 py-8">
       <div>
         <div className="mb-8">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-[#8FA888] uppercase">
+          <p className="text-ink-soft font-mono text-[10px] tracking-[0.2em] uppercase">
             welcome to
           </p>
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="font-serif text-xl leading-tight text-[#F4ECD8] hover:text-white"
+            className="text-ink font-serif text-xl leading-tight hover:text-white"
           >
             bahar&apos;s house
           </Link>
@@ -99,9 +99,10 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-2.5 rounded px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? "bg-[#3D5A3E] text-[#F4ECD8]"
-                      : "text-[#8FA888] hover:bg-[#3D5A3E]/40 hover:text-[#B8CCAF]"
+                      ? "bg-surface text-ink"
+                      : "text-ink-soft hover:bg-surface hover:text-ink"
                   }`}
+                  aria-current={active ? "page" : undefined}
                 >
                   <span className="text-base">{room.emoji}</span>
                   <span>{room.label}</span>
@@ -120,13 +121,13 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
         <Link
           href={signedIn ? "/study" : "/login"}
           onClick={() => setOpen(false)}
-          className="block font-mono text-xs text-[#8FA888] transition-colors hover:text-[#B8CCAF]"
+          className="text-ink-soft hover:text-ink block font-mono text-xs transition-colors"
         >
           {signedIn ? "you're in ✓" : "owner's entrance →"}
         </Link>
         <div className="flex items-end justify-between">
           <Fern className="h-16 w-10 opacity-60" />
-          <p className="font-mono text-[10px] text-[#5C7D5D]">est. 2026</p>
+          <p className="text-ink-soft font-mono text-[10px]">est. 2026</p>
         </div>
       </div>
     </nav>
@@ -135,18 +136,13 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
   return (
     <>
       {/* Mobile top bar */}
-      <header
-        className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 px-4 md:hidden"
-        style={{
-          backgroundColor: "#2A1F0E",
-          borderBottom: "1px solid #3D5A3E",
-        }}
-      >
+      <header className="sidebar-chrome border-line bg-bg fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b px-4 md:hidden">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-label="Menu"
-          className="text-[#F4ECD8]"
+          aria-expanded={open}
+          className="text-ink"
         >
           <svg
             width="22"
@@ -163,7 +159,7 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
             />
           </svg>
         </button>
-        <Link href="/" className="font-serif text-[#F4ECD8]">
+        <Link href="/" className="text-ink font-serif">
           bahar&apos;s house
         </Link>
       </header>
@@ -176,10 +172,9 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
         />
       )}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-56 transition-transform duration-200 md:translate-x-0 ${
+        className={`sidebar-chrome border-line bg-bg fixed top-0 bottom-0 left-0 z-50 w-56 border-r transition-transform duration-200 md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{ backgroundColor: "#2A1F0E", borderRight: "1px solid #3D5A3E" }}
       >
         {nav}
       </aside>
