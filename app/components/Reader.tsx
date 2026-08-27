@@ -929,17 +929,20 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
         </div>
       </header>
 
-      {/* chapters drawer — left side on desktop, sheet on mobile */}
+      {/* chapters drawer — left side on desktop, sheet on mobile. It's fixed
+          to the viewport, so it has to clear the house nav itself: that nav is
+          a fixed 14rem column from `md` up (and a fixed 3.5rem bar below it),
+          both of which sit above this drawer and would otherwise cover it. */}
       {chaptersOpen && (
         <button
           aria-label="Close chapters"
           onClick={() => setChaptersOpen(false)}
-          className="bg-ink/20 fixed inset-0 z-30 sm:hidden"
+          className="bg-ink/20 fixed inset-0 z-30 md:hidden"
         />
       )}
       <div className="flex min-h-0 flex-1">
         <aside
-          className={`${chaptersOpen ? "flex" : "hidden"} border-line bg-surface fixed inset-y-0 left-0 z-40 w-72 max-w-[80%] flex-col border-r shadow-2xl`}
+          className={`${chaptersOpen ? "flex" : "hidden"} border-line bg-surface fixed top-14 bottom-0 left-0 z-40 w-72 max-w-[80%] flex-col border-r shadow-2xl md:top-0 md:left-56`}
         >
           <div className="border-line flex items-center justify-between border-b px-4 py-3">
             <span className="font-serif text-sm font-medium">Chapters</span>
