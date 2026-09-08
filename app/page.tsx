@@ -86,7 +86,7 @@ const ROOMS = [
 ];
 
 function PositionedImage({ artwork }: { artwork: Artwork }) {
-  const image = <Image src={`${ART}/${artwork.src}`} alt={artwork.alt} width={artwork.width} height={artwork.height} className={`${artwork.src.endsWith(".png") ? "mix-blend-multiply" : ""} ${artwork.src === "o-is.png" ? "object-cover transition-transform duration-200 group-hover:scale-105" : "object-cover"}`} priority={artwork.top < 800} />;
+  const image = <Image src={`${ART}/${artwork.src}?v=2`} alt={artwork.alt} width={artwork.width} height={artwork.height} className={artwork.src === "o-is.png" ? "object-cover transition-transform duration-200 group-hover:scale-105" : "object-cover"} priority={artwork.top < 800} />;
   if (artwork.src !== "o-is.png") {
     return <div className="absolute" style={{ left: artwork.left, top: artwork.top }}>{image}</div>;
   }
@@ -165,10 +165,10 @@ export default function GalleryPage() {
                 style={{ left: 0, top: 0, width: room.imageWidth, height: room.imageHeight }}
               >
                 <Image
-                  src={`${ART}/${room.imageSrc}`}
+                  src={`${ART}/${room.imageSrc}?v=2`}
                   alt=""
                   fill
-                  className="object-cover mix-blend-multiply"
+                  className="object-cover"
                   sizes={`${room.imageWidth}px`}
                 />
               </Link>
