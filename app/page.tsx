@@ -1,162 +1,188 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { isOwner } from "@/app/lib/session";
+import ResponsiveFigmaCanvas from "@/app/components/ResponsiveFigmaCanvas";
 
-/* The hallway: the cottage's welcome landing. Every card is a door into a
-   room of the house. Old share links (`/?book=…`) predate the house and are
-   forwarded to the study. */
+export const metadata: Metadata = {
+  title: "my portfolio — bahar's house",
+  description: "Projects, jobs, and achievements.",
+};
 
+const ART = "/figma-home";
+type Artwork = { src: string; left: number; top: number; width: number; height: number; alt: string };
+const ARTWORK: Artwork[] = [
+  { src: "welcome-11.png", left: 1245, top: 1706, width: 273, height: 483, alt: "Botanical collage" },
+  { src: "welcome-12.png", left: 29, top: 2309, width: 230, height: 208, alt: "Patterned object" },
+  { src: "welcome-14.png", left: 841, top: 389, width: 218, height: 318, alt: "Mushroom collage" },
+  { src: "welcome-3.png", left: 1165, top: 368, width: 196, height: 351, alt: "Abstract collage" },
+  { src: "welcome-4.png", left: 520, top: 359, width: 229, height: 330, alt: "Green insect collage" },
+  { src: "welcome-1.png", left: 44, top: 174, width: 405, height: 545, alt: "Coffee and plant collage" },
+  { src: "welcome-1-1.png", left: 1204, top: 29, width: 227, height: 167, alt: "Brain collage" },
+  { src: "welcome-2.png", left: 418, top: 17, width: 287, height: 342, alt: "Moon collage" },
+  { src: "union.svg", left: 914, top: 909, width: 532, height: 600, alt: "" },
+  { src: "welcome-5.png", left: 884, top: 983, width: 499, height: 603, alt: "Flower research collage" },
+  { src: "o-is.png", left: 1095, top: 2009, width: 288, height: 360, alt: "Electronic collage" },
+  { src: "welcome-15.png", left: 916, top: 1823, width: 290, height: 232, alt: "Plant collage" },
+  { src: "welcome-16.png", left: -21, top: 1889, width: 260, height: 315, alt: "Paperclip collage" },
+  { src: "welcome-17.png", left: 209, top: 2033, width: 259, height: 366, alt: "Plant collage" },
+  { src: "welcome-18.png", left: 1220, top: 2309, width: 249, height: 212, alt: "Book collage" },
+];
 const ROOMS = [
   {
-    href: "/hallway",
-    label: "My Portfolio",
-    emoji: "💼",
-    tagline: "projects, jobs & wins",
-  },
-  {
     href: "/notes",
-    label: "Writing Room",
-    emoji: "✒️",
-    tagline: "notes & essays",
+    label: "The writing room",
+    left: 624,
+    top: 2751,
+    imageLeft: 599,
+    imageTop: 2534,
+    imageWidth: 236,
+    imageHeight: 193,
+    imageSrc: "welcome-7.png",
   },
   {
     href: "/study",
     label: "The Study",
-    emoji: "📚",
-    tagline: "what I'm reading",
-  },
-  // Roadmaps is a private room — only shown to the owner (see ownerOnly).
-  {
-    href: "/roadmaps",
-    label: "Roadmaps",
-    emoji: "🗺️",
-    tagline: "learn it chunk by chunk",
-    ownerOnly: true,
-  },
-  {
-    href: "/daily",
-    label: "Daily Room",
-    emoji: "☕",
-    tagline: "today, always today",
+    left: 231,
+    top: 2866,
+    imageLeft: 225,
+    imageTop: 2617,
+    imageWidth: 254,
+    imageHeight: 224,
+    imageSrc: "welcome-8.png",
   },
   {
     href: "/workshop",
-    label: "The Workshop",
-    emoji: "🔧",
-    tagline: "things I make",
+    label: "The workshop",
+    left: 1175,
+    top: 3141,
+    imageLeft: 1122,
+    imageTop: 2778,
+    imageWidth: 257,
+    imageHeight: 350,
+    imageSrc: "a.png",
+  },
+  {
+    href: "/hallway",
+    label: "My portfolio",
+    left: 711,
+    top: 3182,
+    imageLeft: 689,
+    imageTop: 2907,
+    imageWidth: 243,
+    imageHeight: 256,
+    imageSrc: "welcome-6.png",
+  },
+  {
+    href: "/daily",
+    label: "The daily",
+    left: 257,
+    top: 3188,
+    imageLeft: 183,
+    imageTop: 2921,
+    imageWidth: 266,
+    imageHeight: 266,
+    imageSrc: "welcome-9.png",
   },
 ];
 
-// Hand-drawn leaf, echoing the sidebar botanicals.
-function Leaf({ className = "" }: { className?: string }) {
+function PositionedImage({ artwork }: { artwork: Artwork }) {
+  const image = <Image src={`${ART}/${artwork.src}`} alt={artwork.alt} width={artwork.width} height={artwork.height} className={`${artwork.src.endsWith(".png") ? "mix-blend-multiply" : ""} ${artwork.src === "o-is.png" ? "object-cover transition-transform duration-200 group-hover:scale-105" : "object-cover"}`} priority={artwork.top < 800} />;
+  if (artwork.src !== "o-is.png") {
+    return <div className="absolute" style={{ left: artwork.left, top: artwork.top }}>{image}</div>;
+  }
   return (
-    <svg
-      viewBox="0 0 80 120"
-      className={className}
-      aria-hidden="true"
-      fill="none"
-    >
-      <path
-        d="M40 110 C40 110 10 80 8 50 C6 20 40 5 40 5 C40 5 74 20 72 50 C70 80 40 110 40 110Z"
-        fill="#5C7D5D"
-        opacity="0.5"
-      />
-      <path
-        d="M40 110 L40 5"
-        stroke="#3D5A3E"
-        strokeWidth="1.5"
-        opacity="0.5"
-      />
-      <path
-        d="M40 70 C40 70 22 55 18 40"
-        stroke="#3D5A3E"
-        strokeWidth="1"
-        opacity="0.4"
-      />
-      <path
-        d="M40 55 C40 55 55 42 60 30"
-        stroke="#3D5A3E"
-        strokeWidth="1"
-        opacity="0.4"
-      />
-    </svg>
+    <div className="group absolute" style={{ left: artwork.left, top: artwork.top }}>
+      {image}
+      <span                   className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] text-[var(--ink)] shadow-[4px_6px_20px_rgba(42,31,14,0.12)] opacity-0 transition-opacity group-hover:opacity-100">
+        I ❤️ caffeine
+      </span>
+    </div>
   );
 }
 
-export default async function Hallway({
-  searchParams,
-}: {
-  searchParams: Promise<{ book?: string | string[] }>;
-}) {
-  const { book } = await searchParams;
-  if (typeof book === "string" && book) {
-    redirect(`/study?book=${encodeURIComponent(book)}`);
-  }
-
-  const owner = await isOwner();
-  const rooms = ROOMS.filter((room) => !room.ownerOnly || owner);
-
+export default function GalleryPage() {
   return (
-    <div className="relative flex-1 overflow-hidden">
-      {/* botanical corners */}
-      <div className="pointer-events-none absolute top-0 right-0 h-72 w-56 opacity-40">
-        <Leaf className="sway absolute top-6 right-10 h-24 w-16" />
-        <Leaf className="sway absolute top-20 right-24 h-14 w-10" />
-      </div>
-      <div className="pointer-events-none absolute bottom-0 left-0 h-56 w-44 opacity-30">
-        <Leaf className="sway absolute bottom-8 left-6 h-20 w-14 -scale-x-100" />
-      </div>
-
-      <div className="fade-up mx-auto max-w-2xl px-8 pt-16 pb-16">
-        <span className="text-accent-2 font-mono text-xs tracking-[0.2em] uppercase">
-          — the hallway
-        </span>
-        <h1 className="text-ink mt-3 font-serif text-4xl leading-tight sm:text-5xl">
-          Hi, I&apos;m Bahar.
-          <br />
-          <em>Welcome to my home.</em>
-        </h1>
-        <p className="text-ink-soft mt-6 max-w-xl text-lg leading-relaxed">
-          This is a safe space for me to build, explore, and write.
-        </p>
-        <p className="text-ink-soft/90 mt-4 max-w-xl leading-relaxed">
-          Hiii I&apos;m a Computer Science student at the University of
-          Edinburgh who loves to challenge myself and learn. Between a part-time
-          job, uni, picking up new skills, and whatever side quest I&apos;m on,
-          life gets pretty full, so I built this not just to show my work but to
-          track my hobbies and grow new habits.
-        </p>
-        <p className="text-ink-soft/90 mt-4 max-w-xl leading-relaxed">
-          I&apos;ll be updating it often, so if something looks unpolished or
-          unfinished, please respect the journey. Otherwise, feel free to wander
-          into the rooms, explore, and have a good time!
-        </p>
-
-        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {rooms.map((room) => (
-            <Link
-              key={room.href}
-              href={room.href}
-              className="border-line bg-surface hover:border-accent group rounded-sm border p-5 transition-colors"
-            >
-              <div className="mb-2 text-2xl">{room.emoji}</div>
-              <div className="text-ink font-serif text-base font-medium">
-                {room.label}
-              </div>
-              <div className="text-accent-2 mt-0.5 font-mono text-xs">
-                {room.tagline}
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <div className="border-line mt-16 flex items-center gap-3 border-t pt-8">
-          <Leaf className="h-8 w-6 opacity-50" />
-          <p className="text-ink-soft font-mono text-xs">
-            tend the garden · write the words · make the things
+    <div className="figma-home overflow-x-hidden bg-[var(--bg)] text-black">
+      <ResponsiveFigmaCanvas>
+        <section className="relative h-[3334px] w-[1492px]">
+          {ARTWORK.map((artwork) => <PositionedImage key={artwork.src} artwork={artwork} />)}
+          <h1 className="absolute left-[726px] top-[111px] w-[822px] font-serif text-[84px] font-bold leading-none">
+            Welcome<br /><span className="pl-[300px]">to my brain</span>
+          </h1>
+          <p className="absolute left-[120px] top-[820px] z-10 w-[680px] font-serif text-[34px] leading-normal">
+            Hiii I&apos;m Bahar, a Computer Science student at the University
+            of Edinburgh who loves to challenge myself and learn. Between a
+            part-time job, uni, picking up new skills, and whatever side quest
+            I&apos;m on life gets pretty full, so I built this not just to show
+            my work but to track my hobbies and grow new habits. I&apos;ll be
+            updating it often, so if something looks unpolished or unfinished,
+            it&apos;s a learning journey and I hope to continuously improve it.
+            Feel free to wander into the rooms, explore, and have a good time!
           </p>
-        </div>
-      </div>
+          <section className="absolute left-[406px] top-[1770px] z-10 w-[680px] font-serif text-[34px] leading-normal">
+            <h2 className="text-[56px]">My interests...</h2>
+            <ul className="mt-6 list-disc pl-[60px]">
+              <li className="w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
+                Anything science &amp; Tech!
+              </li>
+              <li className="w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
+                CURIOSITY, learning and innovating
+              </li>
+              <li className="w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
+                Coffee, reading and making
+              </li>
+              <li className="group relative w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
+                <span tabIndex={0}>pushing my physical limits</span>
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute left-full top-1/2 ml-5 -translate-y-1/2 whitespace-nowrap bg-black px-4 py-2 font-mono text-[18px] text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                >
+                  I love the gym !!
+                </span>
+              </li>
+              <li className="w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
+                plants and solar punk
+              </li>
+              <li className="w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
+                Psychology, EPISTEMOLOGY and neuroscience
+              </li>
+            </ul>
+          </section>
+          <div className="absolute left-[932px] top-[2534px] w-[649px]">
+            <h2 className="font-serif text-[68px] leading-none">The <strong className="font-bold">rooms...</strong></h2>
+            <p className="mt-5 font-serif text-[34px] leading-normal">click on them to visit the room</p>
+          </div>
+          {ROOMS.map((room) => (
+            <div
+              key={room.href}
+              className="group absolute z-10 h-[700px] w-[800px] transition-transform duration-200 ease-out hover:scale-105 focus-within:scale-105"
+              style={{ left: room.imageLeft, top: room.imageTop }}
+            >
+              <Link
+                href={room.href}
+                aria-label={`Open ${room.label}`}
+                className="absolute z-10 block overflow-visible"
+                style={{ left: 0, top: 0, width: room.imageWidth, height: room.imageHeight }}
+              >
+                <Image
+                  src={`${ART}/${room.imageSrc}`}
+                  alt=""
+                  fill
+                  className="object-cover mix-blend-multiply"
+                  sizes={`${room.imageWidth}px`}
+                />
+              </Link>
+              <Link
+                href={room.href}
+                className="absolute z-10 block font-serif text-[34px] leading-normal"
+                style={{ left: room.left - room.imageLeft, top: room.top - room.imageTop }}
+              >
+                {room.label}
+              </Link>
+            </div>
+          ))}
+        </section>
+      </ResponsiveFigmaCanvas>
     </div>
   );
 }
