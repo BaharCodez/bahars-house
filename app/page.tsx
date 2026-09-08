@@ -109,7 +109,7 @@ export default function GalleryPage() {
           <h1 className="absolute left-[726px] top-[111px] w-[822px] font-serif text-[84px] font-bold leading-none">
             Welcome<br /><span className="pl-[300px]">to my brain</span>
           </h1>
-          <p className="absolute left-[120px] top-[820px] z-10 w-[680px] font-serif text-[34px] leading-normal">
+          <p className="absolute left-[120px] top-[820px] z-10 w-[680px] font-sans text-[34px] leading-normal">
             Hiii I&apos;m Bahar, a Computer Science student at the University
             of Edinburgh who loves to challenge myself and learn. Between a
             part-time job, uni, picking up new skills, and whatever side quest
@@ -119,7 +119,7 @@ export default function GalleryPage() {
             it&apos;s a learning journey and I hope to continuously improve it.
             Feel free to wander into the rooms, explore, and have a good time!
           </p>
-          <section className="absolute left-[406px] top-[1770px] z-10 w-[680px] font-serif text-[34px] leading-normal">
+          <section className="absolute left-[406px] top-[1770px] z-10 w-[680px] font-sans text-[34px] leading-normal">
             <h2 className="text-[56px]">My interests...</h2>
             <ul className="mt-6 list-disc pl-[60px]">
               <li className="w-fit transition-transform duration-200 hover:scale-105 focus-within:scale-105">
@@ -175,7 +175,7 @@ export default function GalleryPage() {
               </Link>
               <Link
                 href={room.href}
-                className="absolute z-10 block font-serif text-[34px] leading-normal"
+                className="absolute z-10 block font-mono text-[30px] leading-normal"
                 style={{ left: room.left - room.imageLeft, top: room.top - room.imageTop }}
               >
                 {room.label}
