@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import {
   Geist,
   Geist_Mono,
@@ -118,11 +119,9 @@ export default async function RootLayout({
     >
       <head>
         {/* Apply the saved theme before paint to avoid a flash. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'cottage';}catch(e){}})();`,
-          }}
-        />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function(){try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'cottage';}catch(e){}})();`}
+        </Script>
       </head>
       <body className="min-h-full">
         <Providers>
