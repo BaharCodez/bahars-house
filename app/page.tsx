@@ -135,7 +135,7 @@ export default function GalleryPage() {
                 <span tabIndex={0}>pushing my physical limits</span>
                 <span
                   role="tooltip"
-                  className="pointer-events-none absolute left-full top-1/2 ml-5 -translate-y-1/2 whitespace-nowrap bg-black px-4 py-2 font-mono text-[18px] text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  className="pointer-events-none absolute left-full top-1/2 ml-8 -translate-y-1/2 whitespace-nowrap bg-black px-4 py-2 font-mono text-[18px] text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
                 >
                   I love the gym !!
                 </span>
