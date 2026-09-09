@@ -4,7 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import UploadDropzone from "./UploadDropzone";
 import Library from "./Library";
 import Reader from "./Reader";
-import { deleteBook, fetchBooks, uploadBook } from "@/app/lib/api";
+import {
+  deleteBook,
+  fetchBooks,
+  bookFileUrl,
+  updateBookMetadata,
+  uploadBook,
+} from "@/app/lib/api";
 import { parseBookMetadata } from "@/app/lib/epub";
 import type { BookMeta, CurrentUser } from "@/app/lib/types";
 
@@ -39,6 +45,32 @@ export default function ReaderApp({
       try {
         const list = await fetchBooks();
         if (active) setBooks(list);
+        if (canManageBooks) {
+          for (const book of list) {
+            if (book.author !== "Unknown author" && book.coverDataUrl) continue;
+            try {
+              const response = await fetch(bookFileUrl(book.id));
+              if (!response.ok) continue;
+              const meta = await parseBookMetadata(
+                await response.arrayBuffer(),
+              );
+              const patch = {
+                ...(book.author === "Unknown author" && meta.author
+                  ? { author: meta.author }
+                  : {}),
+                ...(meta.coverDataUrl && !book.coverDataUrl
+                  ? { coverDataUrl: meta.coverDataUrl }
+                  : {}),
+              };
+              if (Object.keys(patch).length) {
+                await updateBookMetadata(book.id, patch);
+              }
+            } catch (error) {
+              console.warn("Couldn't repair book metadata.", error);
+            }
+          }
+          if (active) setBooks(await fetchBooks());
+        }
       } catch {
         if (active) setBooks([]);
       }
@@ -58,7 +90,7 @@ export default function ReaderApp({
     return () => {
       active = false;
     };
-  }, [currentUser]);
+  }, [canManageBooks, currentUser]);
 
   // Keep the URL in sync so the current book is always shareable. Guarded so
   // it can't wipe the saved book before the restore above has run.

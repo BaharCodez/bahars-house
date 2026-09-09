@@ -41,6 +41,18 @@ export async function deleteBook(id: string): Promise<void> {
   if (!res.ok && res.status !== 204) throw new Error("Couldn't delete book.");
 }
 
+export async function updateBookMetadata(
+  id: string,
+  meta: { title?: string; author?: string; coverDataUrl?: string },
+): Promise<void> {
+  const res = await fetch(`/api/books/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(meta),
+  });
+  if (!res.ok) throw new Error("Couldn't update book metadata.");
+}
+
 // URL the reader fetches the raw EPUB bytes from.
 export function bookFileUrl(id: string): string {
   return `/api/books/${id}`;
