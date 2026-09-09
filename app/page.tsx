@@ -231,9 +231,9 @@ function PositionedImage({ artwork }: { artwork: Artwork }) {
 
 export default function GalleryPage() {
   return (
-    <div className="figma-home overflow-x-hidden bg-[var(--bg)] text-black">
+    <div className="figma-home text-ink overflow-x-hidden">
       <ResponsiveFigmaCanvas>
-        <section className="relative h-[3334px] w-[1492px]">
+        <section className="relative h-[3155px] w-[1617px]">
           {ARTWORK.map((artwork) => (
             <PositionedImage key={artwork.src} artwork={artwork} />
           ))}
@@ -271,7 +271,7 @@ export default function GalleryPage() {
                 <span tabIndex={0}>pushing my physical limits</span>
                 <span
                   role="tooltip"
-                  className="pointer-events-none absolute top-1/2 left-full ml-8 -translate-y-1/2 bg-black px-4 py-2 font-mono text-[18px] whitespace-nowrap text-white opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                  className="pointer-events-none absolute top-1/2 left-full ml-8 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
                 >
                   I love the gym !!
                 </span>
@@ -320,7 +320,7 @@ export default function GalleryPage() {
               </Link>
               <Link
                 href={room.href}
-                className="absolute z-10 block font-mono text-[30px] leading-normal"
+                className="text-accent-2 absolute z-10 block font-mono text-[30px] leading-normal"
                 style={{
                   left: room.left - room.imageLeft,
                   top: room.top - room.imageTop,
