@@ -117,8 +117,8 @@ const ARTWORK: Artwork[] = [
   },
   {
     src: "welcome-17.png",
-    left: 1230,
-    top: 1636,
+    left: 925,
+    top: 430,
     width: 182,
     height: 257,
     alt: "Plant collage",
