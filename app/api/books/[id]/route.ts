@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { actorUserId, requireOwner } from "@/app/lib/session";
+import { requireOwner } from "@/app/lib/session";
 
 // Stream the raw EPUB. The shelf is public, so anyone may open a book.
 export async function GET(
@@ -30,16 +30,12 @@ export async function DELETE(
 ) {
   const denied = await requireOwner();
   if (denied) return denied;
-  const userId = await actorUserId();
-  if (!userId) return new NextResponse(null, { status: 401 });
-
   const { id } = await params;
   const book = await prisma.book.findUnique({
     where: { id },
-    select: { ownerId: true },
+    select: { id: true },
   });
   if (!book) return new NextResponse(null, { status: 404 });
-  if (book.ownerId !== userId) return new NextResponse(null, { status: 403 });
 
   await prisma.book.delete({ where: { id } });
   return new NextResponse(null, { status: 204 });

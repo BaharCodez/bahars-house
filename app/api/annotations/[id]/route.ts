@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { actorUserId, requireOwner } from "@/app/lib/session";
+import { currentUserId } from "@/app/lib/session";
 import { annotationPatchSchema } from "@/app/lib/validation";
 
 // Re-categorise a mark, or write its note. Your own notes only.
@@ -8,9 +8,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const denied = await requireOwner();
-  if (denied) return denied;
-  const userId = await actorUserId();
+  const userId = await currentUserId();
   if (!userId) return new NextResponse(null, { status: 401 });
 
   const { id } = await params;
@@ -65,9 +63,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const denied = await requireOwner();
-  if (denied) return denied;
-  const userId = await actorUserId();
+  const userId = await currentUserId();
   if (!userId) return new NextResponse(null, { status: 401 });
 
   const { id } = await params;

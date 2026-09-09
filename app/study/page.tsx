@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@/app/lib/auth";
+import { isOwner } from "@/app/lib/session";
 import ReaderApp from "@/app/components/ReaderApp";
 
 export const metadata: Metadata = {
@@ -12,12 +13,14 @@ export const metadata: Metadata = {
 export default async function StudyPage() {
   const session = await auth();
   const user = session?.user;
+  const canManageBooks = await isOwner();
 
   return (
     <ReaderApp
       currentUser={
         user ? { id: user.id, name: user.name ?? user.email ?? "You" } : null
       }
+      canManageBooks={canManageBooks}
     />
   );
 }

@@ -8,12 +8,13 @@ import { deleteBook, fetchBooks, uploadBook } from "@/app/lib/api";
 import { parseBookMetadata } from "@/app/lib/epub";
 import type { BookMeta, CurrentUser } from "@/app/lib/types";
 
-// `currentUser` is null for visitors: the shelf and the books are public,
-// only adding/removing books and writing notes need the signed-in owner.
+// `currentUser` is null for visitors: the shelf and the books are public.
 export default function ReaderApp({
   currentUser,
+  canManageBooks,
 }: {
   currentUser: CurrentUser | null;
+  canManageBooks: boolean;
 }) {
   const [books, setBooks] = useState<BookMeta[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -43,7 +44,10 @@ export default function ReaderApp({
       }
       // Reopen the book from a share link, or the last one you were reading.
       const params = new URLSearchParams(window.location.search);
-      const shared = params.get("book") ?? localStorage.getItem("lastBook");
+      const savedBookKey = currentUser ? `lastBook:${currentUser.id}` : null;
+      const shared =
+        params.get("book") ??
+        (savedBookKey ? localStorage.getItem(savedBookKey) : null);
       if (shared && active) {
         // Honor `?loc=` only when it comes with an explicit `?book=` link.
         if (params.get("book")) setOpenLoc(params.get("loc"));
@@ -54,7 +58,7 @@ export default function ReaderApp({
     return () => {
       active = false;
     };
-  }, []);
+  }, [currentUser]);
 
   // Keep the URL in sync so the current book is always shareable. Guarded so
   // it can't wipe the saved book before the restore above has run.
@@ -63,15 +67,19 @@ export default function ReaderApp({
     const url = new URL(window.location.href);
     if (openId) {
       url.searchParams.set("book", openId);
-      localStorage.setItem("lastBook", openId);
+      if (currentUser) {
+        localStorage.setItem(`lastBook:${currentUser.id}`, openId);
+      }
     } else {
       url.searchParams.delete("book");
-      localStorage.removeItem("lastBook");
+      if (currentUser) {
+        localStorage.removeItem(`lastBook:${currentUser.id}`);
+      }
     }
     // `loc` is a one-shot jump — keep the shareable URL down to just `?book=`.
     url.searchParams.delete("loc");
     window.history.replaceState(null, "", url);
-  }, [openId]);
+  }, [currentUser, openId]);
 
   const addBook = useCallback(
     async (file: File) => {
@@ -167,6 +175,7 @@ export default function ReaderApp({
         busy={busy}
         error={error}
         userName={currentUser?.name ?? "friend"}
+        canManageBooks={canManageBooks}
         onFile={addBook}
       />
     );
@@ -178,6 +187,7 @@ export default function ReaderApp({
       busy={busy}
       error={error}
       userName={currentUser?.name ?? null}
+      canManageBooks={canManageBooks}
       onFile={addBook}
       onOpen={(id) => {
         setOpenLoc(null);

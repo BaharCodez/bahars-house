@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const DESIGN_WIDTH = 1492;
-const DESIGN_HEIGHT = 3334;
+const DESIGN_WIDTH = 1617;
+const DESIGN_HEIGHT = 3155;
 
 export default function ResponsiveFigmaCanvas({
   children,
@@ -34,7 +34,7 @@ export default function ResponsiveFigmaCanvas({
       style={{ height: DESIGN_HEIGHT * scale }}
     >
       <div
-        className="absolute left-1/2 top-0"
+        className="absolute top-0 left-1/2"
         style={{
           width: DESIGN_WIDTH,
           height: DESIGN_HEIGHT,

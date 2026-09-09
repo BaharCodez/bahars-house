@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { actorUserId, currentUserId, requireOwner } from "@/app/lib/session";
+import { currentUserId } from "@/app/lib/session";
 
 // The signed-in user's reading position in this book (synced across devices).
 export async function GET(
@@ -26,9 +26,7 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const denied = await requireOwner();
-  if (denied) return denied;
-  const userId = await actorUserId();
+  const userId = await currentUserId();
   if (!userId) return new NextResponse(null, { status: 401 });
 
   const { id } = await params;

@@ -12,6 +12,7 @@ interface LibraryProps {
   busy: boolean;
   error: string | null;
   userName: string | null; // null = visitor browsing the public shelf
+  canManageBooks: boolean;
   onFile: (file: File) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
@@ -52,6 +53,7 @@ export default function Library({
   busy,
   error,
   userName,
+  canManageBooks,
   onFile,
   onOpen,
   onDelete,
@@ -103,14 +105,16 @@ export default function Library({
             {books.length} book{books.length === 1 ? "" : "s"} · shared with
             everyone
           </p>
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={busy}
-            className="bg-accent text-accent-ink rounded-full px-4 py-2 text-sm font-medium shadow-sm transition hover:opacity-90 disabled:opacity-50"
-          >
-            {busy ? "Adding…" : "+ Add book"}
-          </button>
+          {canManageBooks && (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={busy}
+              className="bg-accent text-accent-ink rounded-full px-4 py-2 text-sm font-medium shadow-sm transition hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? "Adding…" : "+ Add book"}
+            </button>
+          )}
         </div>
 
         {error && (
@@ -130,6 +134,7 @@ export default function Library({
                     book={book}
                     onOpen={onOpen}
                     onDelete={onDelete}
+                    canManageBooks={canManageBooks}
                   />
                 ))}
                 <ShelfPlant index={shelfIndex * 2} />
@@ -167,10 +172,12 @@ function BookSpine({
   book,
   onOpen,
   onDelete,
+  canManageBooks,
 }: {
   book: BookMeta;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  canManageBooks: boolean;
 }) {
   return (
     <div className="flex w-28 shrink-0 flex-col sm:w-32">
@@ -210,7 +217,7 @@ function BookSpine({
       </p>
       <div className="text-ink-soft mt-0.5 flex items-center justify-center gap-2 text-[11px]">
         <span className="truncate">{book.mine ? "you" : book.ownerName}</span>
-        {book.mine && (
+        {canManageBooks && (
           <button
             type="button"
             onClick={() => onDelete(book.id)}
