@@ -117,7 +117,7 @@ const ARTWORK: Artwork[] = [
   },
   {
     src: "welcome-17.png",
-    left: 423,
+    left: 1230,
     top: 1636,
     width: 182,
     height: 257,
