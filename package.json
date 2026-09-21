@@ -2,13 +2,22 @@
   "name": "social-reading-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
+    "check-node": "node scripts/check-node.mjs",
     "dev": "next dev",
+    "predev": "npm run check-node",
     "build": "prisma generate && next build",
+    "prebuild": "npm run check-node",
     "generate": "prisma generate",
+    "pregenerate": "npm run check-node",
     "migrate": "prisma migrate dev",
+    "premigrate": "npm run check-node",
     "postinstall": "prisma generate",
     "start": "next start",
+    "prestart": "npm run check-node",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -27,8 +36,10 @@
     "bcryptjs": "^3.0.3",
     "epubjs": "^0.3.93",
     "jszip": "^3.10.2",
+    "latest": "^0.2.0",
     "linkedom": "^0.18.13",
     "marked": "^18.0.12",
+    "n": "^10.2.0",
     "next": "16.2.9",
     "next-auth": "^5.0.0-beta.31",
     "pg": "^8.22.0",

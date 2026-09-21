@@ -18,18 +18,47 @@ Generate a secret in PowerShell with:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-After setting the database URL, apply migrations with `npm run migrate`.
+## Setup
+
+This project uses Node.js `24.21.0` and requires Node.js `20.19.0` or newer. The required version is recorded in `.nvmrc` so every developer can use the same runtime.
+
+The recommended setup uses `nvm`:
+
+```bash
+# Install nvm first if the `nvm` command is not available:
+# https://github.com/nvm-sh/nvm#installing-and-updating
+nvm install
+nvm use
+node --version  # should print v24.21.0
+```
+
+If you do not use `nvm`, install Node.js 20.19 or newer and confirm it before installing dependencies:
+
+```bash
+node --version
+```
+
+After changing `~/.bashrc`, reload it with `source ~/.bashrc` or open a new terminal. Do not prefix `source` with `~`; `~source` is treated as a different command.
+
+Then install dependencies and generate Prisma Client:
+
+```bash
+npm ci
+npm run generate
+```
+
+`npm ci` is configured to reject unsupported Node versions. The `dev`, `build`, `start`, and Prisma commands also run a version check and stop with a clear error if the runtime is too old.
+
+After setting the database URL, apply migrations with:
+
+```bash
+npm run migrate
+```
 
 First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

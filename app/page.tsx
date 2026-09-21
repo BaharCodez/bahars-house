@@ -36,15 +36,15 @@ const ARTWORK: Artwork[] = [
   },
   {
     src: "welcome-14.png",
-    left: 900,
-    top: 455,
+    left: 850,
+    top: 495,
     width: 156,
     height: 228,
     alt: "Mushroom collage",
   },
   {
     src: "welcome-3.png",
-    left: 1126,
+    left: 1176,
     top: 440,
     width: 140,
     height: 250,
@@ -52,15 +52,15 @@ const ARTWORK: Artwork[] = [
   },
   {
     src: "welcome-4.png",
-    left: 630,
+    left: 580,
     top: 300,
-    width: 163,
+    width: 183,
     height: 235,
     alt: "Green insect collage",
   },
   {
     src: "welcome-1.png",
-    left: 277,
+    left: 237,
     top: 199,
     width: 289,
     height: 389,
@@ -76,7 +76,7 @@ const ARTWORK: Artwork[] = [
   },
   {
     src: "welcome-2.png",
-    left: 564,
+    left: 524,
     top: 10,
     width: 206,
     height: 245,
@@ -117,8 +117,8 @@ const ARTWORK: Artwork[] = [
   },
   {
     src: "welcome-17.png",
-    left: 925,
-    top: 430,
+    left: 1200,
+    top: 1600,
     width: 182,
     height: 257,
     alt: "Plant collage",
@@ -126,7 +126,7 @@ const ARTWORK: Artwork[] = [
   {
     src: "welcome-18.png",
     left: 1148,
-    top: 1829,
+    top: 1869,
     width: 174,
     height: 148,
     alt: "Book collage",
@@ -240,7 +240,7 @@ export default function GalleryPage() {
           <h1 className="absolute top-[199px] left-[808px] w-[572px] font-serif text-[84px] leading-none font-bold">
             Welcome
             <br />
-            <span className="pl-[300px]">to my brain</span>
+            <span className="pl-[300px]">to my Brain</span>
           </h1>
           <h2 className="absolute top-[792px] left-[277px] font-serif text-[72px] leading-none">
             About me:
@@ -267,11 +267,19 @@ export default function GalleryPage() {
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
                 Coffee, reading and making
               </li>
-              <li className="group relative w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
-                <span tabIndex={0}>pushing my physical limits</span>
+              <li className="group relative z-50 w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
+                <button
+                  type="button"
+                  title="I love the gym !!"
+                  aria-describedby="gym-tooltip"
+                  className="cursor-help appearance-none border-0 bg-transparent p-0 text-left font-inherit text-inherit"
+                >
+                  pushing my physical limits
+                </button>
                 <span
+                  id="gym-tooltip"
                   role="tooltip"
-                  className="pointer-events-none absolute top-1/2 left-full ml-8 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                  className="pointer-events-none absolute top-1/2 left-full z-50 ml-8 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
                 >
                   I love the gym !!
                 </span>
@@ -295,13 +303,13 @@ export default function GalleryPage() {
           {ROOMS.map((room) => (
             <div
               key={room.href}
-              className="group absolute z-10 h-[700px] w-[800px] transition-transform duration-200 ease-out focus-within:scale-105 hover:scale-105"
+              className="pointer-events-none absolute z-10 h-[700px] w-[800px]"
               style={{ left: room.imageLeft, top: room.imageTop }}
             >
               <Link
                 href={room.href}
                 aria-label={`Open ${room.label}`}
-                className="absolute z-10 block overflow-visible"
+                className="group pointer-events-auto absolute z-10 block origin-center overflow-visible transition-transform duration-200 ease-out hover:scale-105 focus-visible:scale-105"
                 style={{
                   left: 0,
                   top: 0,
@@ -317,10 +325,13 @@ export default function GalleryPage() {
                   className="object-cover"
                   sizes={`${room.imageWidth}px`}
                 />
+                <span className="pointer-events-none absolute top-1/2 left-full z-50 ml-4 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-3 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                  {room.label}
+                </span>
               </Link>
               <Link
                 href={room.href}
-                className="text-accent-2 absolute z-10 block font-mono text-[30px] leading-normal"
+                className="text-accent-2 pointer-events-auto absolute z-10 block origin-left font-mono text-[30px] leading-normal transition-transform duration-200 ease-out hover:scale-105 focus-visible:scale-105"
                 style={{
                   left: room.left - room.imageLeft,
                   top: room.top - room.imageTop,
