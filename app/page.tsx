@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import ResponsiveFigmaCanvas from "@/app/components/ResponsiveFigmaCanvas";
+import SecretClippy from "@/app/components/SecretClippy";
 
 export const metadata: Metadata = {
   title: "my portfolio — bahar's house",
@@ -105,15 +106,7 @@ const ARTWORK: Artwork[] = [
     top: 1447,
     width: 203,
     height: 162,
-    alt: "Plant collage",
-  },
-  {
-    src: "welcome-16.png",
-    left: 263,
-    top: 1535,
-    width: 182,
-    height: 221,
-    alt: "Paperclip collage",
+    alt: "Cat benching a barbell",
   },
   {
     src: "welcome-17.png",
@@ -199,14 +192,14 @@ function PositionedImage({ artwork }: { artwork: Artwork }) {
       width={artwork.width}
       height={artwork.height}
       className={
-        artwork.src === "o-is.png"
+        artwork.src === "o-is.png" || artwork.src === "welcome-15.png"
           ? "object-cover transition-transform duration-200 group-hover:scale-105"
           : "object-cover"
       }
       priority={artwork.top < 800}
     />
   );
-  if (artwork.src !== "o-is.png") {
+  if (artwork.src !== "o-is.png" && artwork.src !== "welcome-15.png") {
     return (
       <div
         className="absolute"
@@ -223,7 +216,9 @@ function PositionedImage({ artwork }: { artwork: Artwork }) {
     >
       {image}
       <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity group-hover:opacity-100">
-        I ❤️ caffeine
+        {artwork.src === "welcome-15.png"
+          ? "I love the action of me benching 80kg"
+          : "I ❤️ caffeine"}
       </span>
     </div>
   );
@@ -237,6 +232,7 @@ export default function GalleryPage() {
           {ARTWORK.map((artwork) => (
             <PositionedImage key={artwork.src} artwork={artwork} />
           ))}
+          <SecretClippy />
           <h1 className="absolute top-[199px] left-[808px] w-[572px] font-serif text-[84px] leading-none font-bold">
             Welcome
             <br />
@@ -288,7 +284,7 @@ export default function GalleryPage() {
                 plants and solar punk
               </li>
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
-                Psychology, EPISTEMOLOGY and neuroscience
+                Psychology, epistemology and neuroscience
               </li>
             </ul>
           </section>
