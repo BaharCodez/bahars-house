@@ -1,24 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bahar's House
 
-## Getting Started
+A Next.js app with Prisma and PostgreSQL.
 
-Create `.env.local` in the project root before starting the app:
+## Environment
 
+Create `.env.local` in the project root, next to `package.json` and `prisma.config.ts` (not inside the `prisma` folder):
 
-The file must be located at `social-reading-app/.env.local`, alongside
-`package.json` and `prisma.config.ts` (not inside the `prisma` folder).
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE/GoodTryOfficer"
+AUTH_SECRET="generate-a-random-secret"
+```
 
-Generate a secret in PowerShell with:
+Generate `AUTH_SECRET` once by running this in any terminal (PowerShell, bash or zsh):
 
-```powershell
+```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
+You can reuse the same `.env.local` on another machine. Never commit it.
+
 ## Setup
 
-This project uses Node.js `24.21.0` and requires Node.js `20.19.0` or newer. The required version is recorded in `.nvmrc` so every developer can use the same runtime.
+This project uses Node.js `24.21.0` and requires `20.19.0` or newer. The version is recorded in `.nvmrc`.
 
-The recommended setup uses `nvm`:
+With `nvm`:
 
 ```bash
 # Install nvm first if the `nvm` command is not available:
@@ -28,52 +33,38 @@ nvm use
 node --version  # should print v24.21.0
 ```
 
-If you do not use `nvm`, install Node.js 20.19 or newer and confirm it before installing dependencies:
+After installing nvm, reload your shell profile (`~/.bashrc` on Linux, `~/.zshrc` on Mac, `$PROFILE` in PowerShell) or open a new terminal.
 
-```bash
-node --version
-```
+Without `nvm`, install Node.js 20.19 or newer and check it with `node --version`.
 
-After changing `~/.bashrc`, reload it with `source ~/.bashrc` or open a new terminal. Do not prefix `source` with `~`; `~source` is treated as a different command.
-
-Then install dependencies and generate Prisma Client:
+Install dependencies (this also generates the Prisma Client):
 
 ```bash
 npm ci
-npm run generate
 ```
 
-`npm ci` is configured to reject unsupported Node versions. The `dev`, `build`, `start`, and Prisma commands also run a version check and stop with a clear error if the runtime is too old.
+`npm ci` rejects unsupported Node versions. The `dev`, `build`, `start` and Prisma commands also stop with a clear error if Node is too old.
 
-After setting the database URL, apply migrations with:
+## Database
+
+Migrations are only needed for a new or out-of-date database. Check first:
 
 ```bash
-npm run migrate
+npx prisma migrate status
 ```
 
-First, run the development server:
+If it is behind, apply the missing migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+Use `npm run migrate` (`prisma migrate dev`) only when creating a new migration on a development database. It can reset the database if it detects drift.
+
+## Run
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000). Pages auto-update as you edit files, starting with `app/page.tsx`.
