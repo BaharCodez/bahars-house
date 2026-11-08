@@ -4,10 +4,6 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Create `.env.local` in the project root before starting the app:
 
-```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE"
-AUTH_SECRET="generate-a-random-secret"
-```
 
 The file must be located at `social-reading-app/.env.local`, alongside
 `package.json` and `prisma.config.ts` (not inside the `prisma` folder).
