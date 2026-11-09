@@ -496,6 +496,32 @@ body {
   background: none;
   padding: 0;
 }
+.article table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.95em;
+}
+.article th,
+.article td {
+  border: 2px solid var(--line);
+  padding: 0.4rem 0.7rem;
+  min-width: 4rem;
+  vertical-align: top;
+  text-align: left;
+}
+.article th {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-weight: 700;
+}
+.article td p,
+.article th p {
+  margin: 0;
+}
+.article .selectedCell {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
 .article hr {
   border: none;
   border-top: 3px solid var(--line);

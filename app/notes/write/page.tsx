@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import PostEditor from "@/app/components/PostEditor";
@@ -35,14 +34,6 @@ export default async function WritePage({
 
   return (
     <main className="flex flex-1 flex-col">
-      <header className="flex items-center px-4 py-3 sm:px-6">
-        <Link
-          href="/notes"
-          className="font-pixel text-ink-soft hover:text-ink text-sm transition-colors"
-        >
-          ← writing room
-        </Link>
-      </header>
       <PostEditor
         allTags={tagCounts.map((t) => t.tag)}
         initial={

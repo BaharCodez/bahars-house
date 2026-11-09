@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import { TableKit } from "@tiptap/extension-table";
 import { Placeholder } from "@tiptap/extensions";
 import { Markdown } from "@tiptap/markdown";
 import TagInput from "./TagInput";
@@ -40,6 +42,9 @@ const MarkdownImage = Image.extend({
     return title ? `![${alt}](${src} "${title}")` : `![${alt}](${src})`;
   },
 }).configure({ inline: true });
+
+const MARKDOWN_HINT =
+  /^\s*(\|.*\||#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```)|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^)\s]+\)/m;
 
 /* A calm writing room: big title, a toolbar, and the article itself is the
    editor — what you type looks like the published page (markdown stays the
@@ -77,6 +82,7 @@ export default function PostEditor({
   const publishedRef = useRef(published);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const mdRef = useRef<string | null>(null);
   useEffect(() => {
     titleRef.current = title;
     tagsRef.current = tags;
@@ -90,6 +96,7 @@ export default function PostEditor({
     extensions: [
       StarterKit.configure({ link: { openOnClick: false } }),
       MarkdownImage,
+      TableKit.configure({ table: { resizable: false } }),
       Placeholder.configure({
         placeholder:
           "Write about what you're reading, building, wondering… (paste or drop images right here)",
@@ -101,6 +108,18 @@ export default function PostEditor({
     editorProps: {
       attributes: { class: "article min-h-[50vh] w-full py-4 outline-none" },
       handlePaste: (_view, event) => {
+        const text = event.clipboardData?.getData("text/plain");
+        if (text) {
+          const ed = editorRef.current;
+          const rawMarkdown =
+            !event.clipboardData?.getData("text/html") &&
+            MARKDOWN_HINT.test(text) &&
+            !ed?.isActive("codeBlock");
+          if (!rawMarkdown || !ed) return false;
+          event.preventDefault();
+          ed.commands.insertContent(text, { contentType: "markdown" });
+          return true;
+        }
         const file = imageFile(event.clipboardData);
         if (!file) return false;
         event.preventDefault();
@@ -140,6 +159,7 @@ export default function PostEditor({
             quote: ed.isActive("blockquote"),
             list: ed.isActive("bulletList"),
             link: ed.isActive("link"),
+            table: ed.isActive("table"),
           }
         : null,
   });
@@ -168,6 +188,7 @@ export default function PostEditor({
     const t = titleRef.current.trim();
     const ed = editorRef.current;
     if (!t || !ed) return null; // nothing to save yet — needs a title
+    syncFromMd();
     setStatus("saving");
     try {
       const res = await fetch(
@@ -298,20 +319,27 @@ export default function PostEditor({
   }
 
   /* The raw-markdown escape hatch. The editor stays mounted (just hidden) and
-     is kept in sync on every keystroke, so autosave always reads the editor. */
+     is synced from the textarea before each save and when switching back. */
+  function syncFromMd() {
+    if (mdRef.current === null) return;
+    editorRef.current?.commands.setContent(mdRef.current, {
+      contentType: "markdown",
+      emitUpdate: false,
+    });
+    mdRef.current = null;
+  }
+
   function toggleMd() {
     const ed = editorRef.current;
     if (!ed) return;
-    if (!showMd) setMdText(ed.getMarkdown());
+    if (showMd) syncFromMd();
+    else setMdText(ed.getMarkdown());
     setShowMd((s) => !s);
   }
 
   function onMdChange(value: string) {
     setMdText(value);
-    editorRef.current?.commands.setContent(value, {
-      contentType: "markdown",
-      emitUpdate: false,
-    });
+    mdRef.current = value;
     schedule();
   }
 
@@ -321,6 +349,34 @@ export default function PostEditor({
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16 sm:px-6">
+      <header
+        className="sticky top-0 z-20 flex h-11 items-center gap-3"
+        style={{ backgroundColor: "var(--bg)" }}
+      >
+        <Link
+          href="/notes"
+          className="font-pixel text-ink-soft hover:text-ink mr-auto text-sm transition-colors"
+        >
+          ← writing room
+        </Link>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => saveAndGo(false)}
+          className="border-line text-ink-soft hover:text-ink font-pixel rounded-full border-2 px-3 py-1 text-xs"
+        >
+          save draft
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => saveAndGo(true)}
+          className="bg-accent text-accent-ink font-pixel rounded-full px-4 py-1 text-xs hover:opacity-90 disabled:opacity-50"
+        >
+          {busy ? "saving…" : "publish"}
+        </button>
+      </header>
+
       <input
         value={title}
         onChange={(e) => {
@@ -354,7 +410,10 @@ export default function PostEditor({
       />
 
       {/* toolbar */}
-      <div className="border-line mt-4 flex flex-wrap items-center gap-2 border-y-2 py-2">
+      <div
+        className="border-line sticky top-11 z-10 mt-4 flex flex-wrap items-center gap-2 border-y-2 py-2"
+        style={{ backgroundColor: "var(--bg)" }}
+      >
         <button
           type="button"
           disabled={showMd}
@@ -437,6 +496,59 @@ export default function PostEditor({
         >
           + image
         </button>
+        <button
+          type="button"
+          disabled={showMd}
+          className={tool + (active?.table ? on : "")}
+          onClick={() =>
+            editor
+              ?.chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+        >
+          table
+        </button>
+        {active?.table && !showMd && (
+          <>
+            <button
+              type="button"
+              className={tool}
+              onClick={() => editor?.chain().focus().addRowAfter().run()}
+            >
+              + row
+            </button>
+            <button
+              type="button"
+              className={tool}
+              onClick={() => editor?.chain().focus().addColumnAfter().run()}
+            >
+              + col
+            </button>
+            <button
+              type="button"
+              className={tool}
+              onClick={() => editor?.chain().focus().deleteRow().run()}
+            >
+              − row
+            </button>
+            <button
+              type="button"
+              className={tool}
+              onClick={() => editor?.chain().focus().deleteColumn().run()}
+            >
+              − col
+            </button>
+            <button
+              type="button"
+              className={`${tool} hover:text-red-500`}
+              onClick={() => editor?.chain().focus().deleteTable().run()}
+            >
+              × table
+            </button>
+          </>
+        )}
         <span
           className={`ml-auto font-mono text-xs ${status === "error" ? "text-red-500" : "text-ink-soft"}`}
         >
@@ -470,22 +582,6 @@ export default function PostEditor({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="border-line flex items-center gap-3 border-t-2 pt-4">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => saveAndGo(true)}
-          className="bg-accent text-accent-ink font-pixel rounded-full px-5 py-2 text-sm hover:opacity-90 disabled:opacity-50"
-        >
-          {busy ? "saving…" : "publish"}
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => saveAndGo(false)}
-          className="border-line text-ink-soft hover:text-ink font-pixel rounded-full border-2 px-4 py-2 text-sm"
-        >
-          save draft
-        </button>
         {(initial || postId) && (
           <button
             type="button"
