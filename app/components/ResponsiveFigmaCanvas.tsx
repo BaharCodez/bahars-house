@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const DESIGN_WIDTH = 1617;
-const DESIGN_HEIGHT = 3155;
+const DESIGN_HEIGHT = 2800;
 
 export default function ResponsiveFigmaCanvas({
   children,

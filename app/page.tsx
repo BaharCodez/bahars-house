@@ -228,7 +228,7 @@ export default function GalleryPage() {
   return (
     <div className="figma-home text-ink overflow-x-hidden">
       <ResponsiveFigmaCanvas>
-        <section className="relative h-[3155px] w-[1617px]">
+        <section className="relative h-[2800px] w-[1617px] -translate-x-[80px]">
           {ARTWORK.map((artwork) => (
             <PositionedImage key={artwork.src} artwork={artwork} />
           ))}
@@ -255,33 +255,32 @@ export default function GalleryPage() {
             <h2 className="font-serif text-[56px]">My interests...</h2>
             <ul className="mt-6 list-disc pl-[60px]">
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
-                Anything science &amp; Tech!
+                Anything science and tech
               </li>
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
-                CURIOSITY, learning and innovating
+                Philosophy and thought
               </li>
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
-                Coffee, reading and making
+                Coffee, reading and making things
               </li>
               <li className="group relative z-50 w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
                 <button
                   type="button"
-                  title="I love the gym !!"
                   aria-describedby="gym-tooltip"
-                  className="cursor-help appearance-none border-0 bg-transparent p-0 text-left font-inherit text-inherit"
+                  className="font-inherit cursor-help appearance-none border-0 bg-transparent p-0 text-left text-inherit"
                 >
-                  pushing my physical limits
+                  Pushing my physical limits
                 </button>
                 <span
                   id="gym-tooltip"
                   role="tooltip"
-                  className="pointer-events-none absolute top-1/2 left-full z-50 ml-8 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                  className="pointer-events-none absolute top-1/2 left-full z-50 ml-8 -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] px-4 py-2 font-mono text-[18px] whitespace-nowrap text-[var(--ink)] opacity-0 shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity select-none group-focus-within:opacity-100 group-hover:opacity-100"
                 >
                   I love the gym !!
                 </span>
               </li>
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
-                plants and solar punk
+                Plants and solarpunk technology
               </li>
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
                 Psychology, epistemology and neuroscience

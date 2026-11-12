@@ -142,7 +142,7 @@ export default async function NotesPage({
         alt: "An open notebook and pen on a desk",
       }}
     >
-      <div className="mx-auto w-full max-w-5xl px-4 pt-8 pb-16 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-16 sm:px-6">
         {/* intro + actions, aligned with the grid below */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <p className="text-ink-soft text-base leading-relaxed">
