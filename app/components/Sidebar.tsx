@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import ThemePicker from "./ThemePicker";
 import AmbientMusic from "./AmbientMusic";
 
 type Room = {
@@ -116,7 +115,6 @@ export default function Sidebar({ isOwner = false }: { isOwner?: boolean }) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <AmbientMusic />
-          <ThemePicker />
         </div>
         <Link
           href={signedIn ? "/study" : "/login"}

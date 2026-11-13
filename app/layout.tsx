@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import {
   Geist,
   Geist_Mono,
   Fraunces,
-  Pixelify_Sans,
   Lora,
   Instrument_Sans,
   Courier_Prime,
@@ -31,12 +29,6 @@ const geistMono = Geist_Mono({
 // Cozy serif for headings / the "bookshelf" feel.
 const fraunces = Fraunces({
   variable: "--font-fraunces",
-  subsets: ["latin"],
-});
-
-// Pixel font for the Plant Shop theme's headings.
-const pixelify = Pixelify_Sans({
-  variable: "--font-pixel",
   subsets: ["latin"],
 });
 
@@ -93,7 +85,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Matches the default (cottage) theme's --bg so the browser chrome blends in.
+  // Matches the page --bg so the browser chrome blends in.
   themeColor: "#f3ede1",
   // Keep the layout sane inside the standalone web-app shell.
   width: "device-width",
@@ -115,14 +107,8 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${pixelify.variable} ${lora.variable} ${instrument.variable} ${courier.variable} ${spaceGrotesk.variable} ${spaceMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${lora.variable} ${instrument.variable} ${courier.variable} ${spaceGrotesk.variable} ${spaceMono.variable} h-full antialiased`}
     >
-      <head>
-        {/* Apply the saved theme before paint to avoid a flash. */}
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'cottage';}catch(e){}})();`}
-        </Script>
-      </head>
       <body className="min-h-full">
         <Providers>
           <Sidebar isOwner={owner} />

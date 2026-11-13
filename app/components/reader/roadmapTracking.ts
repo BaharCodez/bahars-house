@@ -19,6 +19,8 @@ interface StartTrackingOptions {
   book: Book;
   EpubCFI: EpubCFIConstructor;
   rendition: Rendition;
+  // Translates step links into the (possibly merged) book's hrefs.
+  remapHref: (href: string) => string;
   openedViaStepLink: boolean;
   isCancelled: () => boolean;
 }
@@ -94,6 +96,7 @@ export function useRoadmapTracking(bookId: string) {
       book,
       EpubCFI,
       rendition,
+      remapHref,
       openedViaStepLink,
       isCancelled,
     }: StartTrackingOptions) => {
@@ -101,7 +104,11 @@ export function useRoadmapTracking(bookId: string) {
         const steps = await fetchRoadmapStepsForBook(bookId);
         if (isCancelled() || !steps.length) return;
         comparerRef.current = new EpubCFI();
-        const tracked = await resolveTrackedSteps(book, EpubCFI, steps);
+        const tracked = await resolveTrackedSteps(
+          book,
+          EpubCFI,
+          steps.map((s) => ({ ...s, loc: remapHref(s.loc) })),
+        );
         if (isCancelled()) return;
         stepsRef.current = tracked;
         doneIdsRef.current = new Set(

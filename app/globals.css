@@ -1,17 +1,15 @@
 @import "tailwindcss";
 
-/* ---- Themes -------------------------------------------------------------
-   Each theme is a palette of CSS variables, selected by `data-theme` on
-   <html>. Cottagecore bookshop vibes: buttermilk, moss, terracotta, wood. */
+/* ---- Palette ------------------------------------------------------------
+   Cottagecore bookshop vibes: buttermilk, moss, terracotta, wood. */
 
-/* The Cottage — warm cream paper, deep moss, rust. The house's default.
+/* Warm cream paper, deep moss, rust.
    The paper is warm on purpose: a sage base put the whole house in the same
    hue family as the moss accent, which read cold and slightly clinical. The
    contrast comes from the ink being genuinely dark and the mono labels being
    rust, not from draining the warmth out of the background — every text pair
    below clears WCAG AA on the cream just as it did on the sage. */
-:root,
-[data-theme="cottage"] {
+:root {
   color-scheme: light;
   --bg: #f3ede1;
   --bg-2: #e6dfd2;
@@ -29,117 +27,10 @@
   --shelf-edge: #9a7342;
 }
 
-[data-theme="meadow"] {
-  color-scheme: light;
-  --bg: #f4ecd8;
-  --bg-2: #e7dabd;
-  --surface: #fcf7ea;
-  --ink: #4a4231;
-  --ink-soft: #695e48;
-  --line: #ddd0b1;
-  --accent: #616f40; /* moss */
-  --accent-ink: #fbf7ec;
-  --accent-2: #875139; /* terracotta */
-  --shelf: #c69e66;
-  --shelf-edge: #9a7342;
-}
-
-/* Pixel-art cozy plant shop — warm parchment, sage, terracotta, wood. */
-[data-theme="plantshop"] {
-  color-scheme: light;
-  --bg: #efe4c8;
-  --bg-2: #e3d3ab;
-  --surface: #f7efd9;
-  --ink: #4a3f2a;
-  --ink-soft: #68583c;
-  --line: #d8c6a0;
-  --accent: #546c3c; /* leaf */
-  --accent-ink: #f7efd9;
-  --accent-2: #854c2e; /* terracotta */
-  --shelf: #a9743f;
-  --shelf-edge: #7c4f29;
-}
-
-/* Pixel headings only in the Plant Shop theme. */
-[data-theme="plantshop"] .font-serif {
-  font-family: var(--font-pixel), monospace;
-  letter-spacing: 0.01em;
-}
-
-/* Plant decorations appear only in the Plant Shop theme. */
-.plant-decor {
-  display: none;
-}
-[data-theme="plantshop"] .plant-decor {
-  display: block;
-}
-
-[data-theme="sepia"] {
-  color-scheme: light;
-  --bg: #f1e7cf;
-  --bg-2: #e6d6b3;
-  --surface: #faf3e1;
-  --ink: #5b4a33;
-  --ink-soft: #6a5a46;
-  --line: #ddccab;
-  --accent: #8a5c34; /* rust */
-  --accent-ink: #faf3e1;
-  --accent-2: #675c3b;
-  --shelf: #c79a5c;
-  --shelf-edge: #8f6a3a;
-}
-
-/* Woody forest cabin — warm walnut, amber lamplight, pine. */
-[data-theme="cabin"] {
-  color-scheme: dark;
-  --bg: #211a12;
-  --bg-2: #18110a;
-  --surface: #2e2418;
-  --ink: #efe2cd;
-  --ink-soft: #b39c79;
-  --line: #3e3122;
-  --accent: #cf9b53; /* lamplight amber */
-  --accent-ink: #211a12;
-  --accent-2: #8a9a6b; /* pine */
-  --shelf: #6e4f30;
-  --shelf-edge: #4a3420;
-}
-
-/* Autumnal Western dusk — dusky plum sky, sunset rust, golden hour. */
-[data-theme="twilight"] {
-  color-scheme: dark;
-  --bg: #241d28;
-  --bg-2: #1a141e;
-  --surface: #2f2733;
-  --ink: #efe3d6;
-  --ink-soft: #b6a394;
-  --line: #423747;
-  --accent: #d98a52; /* sunset rust */
-  --accent-ink: #241d28;
-  --accent-2: #bc8198; /* dusk rose */
-  --shelf: #6b4f3f;
-  --shelf-edge: #43302a;
-}
-
-[data-theme="forest"] {
-  color-scheme: dark;
-  --bg: #1a241c;
-  --bg-2: #121a14;
-  --surface: #233027;
-  --ink: #e7ecdd;
-  --ink-soft: #9fb09a;
-  --line: #324438;
-  --accent: #9cc07a; /* leaf */
-  --accent-ink: #14201a;
-  --accent-2: #d8a98a;
-  --shelf: #5a4a36;
-  --shelf-edge: #3a2f22;
-}
-
-/* The sidebar / mobile bar is dark walnut in every theme, so the page palette
+/* The sidebar / mobile bar is dark walnut, so the page palette
    doesn't apply inside it — `text-ink-soft` on parchment is unreadable on wood.
    Re-point the tokens to a chrome palette here and every child component
-   (music button, theme picker) picks up readable colours automatically.
+   (e.g. the music button) picks up readable colours automatically.
    Values chosen to clear WCAG AA 4.5:1 on both the wood and the moss fill. */
 .sidebar-chrome {
   color-scheme: dark;
@@ -206,9 +97,8 @@ body {
 /* ---- The pixel house ------------------------------------------------------
    Shared styling for the room pages (den, study, workshop, notes, hallway). */
 
-/* The Cottage look (default): the old pixel lettering becomes Space Mono, and
-   chunky pixel frames become soft parchment cards. The Plant Shop theme keeps
-   the original pixel styling, restored below. */
+/* The old pixel lettering is Space Mono, and chunky pixel frames are soft
+   parchment cards. */
 .font-pixel {
   font-family: var(--font-space-mono), var(--font-geist-mono), monospace;
   letter-spacing: 0.02em;
@@ -217,16 +107,6 @@ body {
 .pixel-frame {
   border: 1px solid var(--line);
   box-shadow: 4px 6px 20px rgba(42, 31, 14, 0.08);
-}
-
-/* Plant Shop theme: restore the original pixel-art house styling. */
-[data-theme="plantshop"] .font-pixel {
-  font-family: var(--font-pixel), monospace;
-  letter-spacing: 0.02em;
-}
-[data-theme="plantshop"] .pixel-frame {
-  border: 3px solid var(--shelf-edge);
-  box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--shelf-edge) 45%, transparent);
 }
 
 /* Cottage botanical animations. */

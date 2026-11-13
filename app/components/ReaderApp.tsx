@@ -180,6 +180,22 @@ export default function ReaderApp({
     [refresh],
   );
 
+  const setCover = useCallback(
+    async (id: string, file: File) => {
+      setError(null);
+      try {
+        await updateBookMetadata(id, {
+          coverDataUrl: await imageToCoverDataUrl(file),
+        });
+        await refresh();
+      } catch (e) {
+        setError("Couldn't set that cover. Try another image.");
+        console.error(e);
+      }
+    },
+    [refresh],
+  );
+
   if (openId) {
     return (
       <Reader
@@ -226,6 +242,20 @@ export default function ReaderApp({
         setOpenId(id);
       }}
       onDelete={removeBook}
+      onSetCover={setCover}
     />
   );
+}
+
+// Shrink a picked/pasted image to a shelf-sized JPEG data URL so covers stay
+// small in the database.
+async function imageToCoverDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 600 / bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.85);
 }

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import ThemePicker from "./ThemePicker";
 
 type Mode = "login" | "signup";
 
@@ -54,9 +53,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center px-6">
-      <div className="absolute top-3 right-4">
-        <ThemePicker />
-      </div>
+      <div className="absolute top-3 right-4"></div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/ShelfWornDrawn.jpeg"

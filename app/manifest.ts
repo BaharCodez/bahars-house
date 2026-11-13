@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
       "A cozy pixel house — a study full of books, a writing room, and an ESP32 workshop.",
     start_url: "/",
     display: "standalone",
-    // Kept in step with the default (cottage) theme's --bg / --accent.
+    // Kept in step with the page --bg / --accent.
     background_color: "#f3ede1",
     theme_color: "#3f5a3c",
     icons: [

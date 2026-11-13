@@ -23,10 +23,15 @@ export default function ReadPage() {
       if (!arrayBuffer) {
         try {
           const data = localStorage.getItem("book");
-          if (!data) throw new Error("No book found. Go back and upload an EPUB first.");
-          arrayBuffer = Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer;
-        } catch (err: any) {
-          setError(err?.message ?? "No book data available");
+          if (!data)
+            throw new Error("No book found. Go back and upload an EPUB first.");
+          arrayBuffer = Uint8Array.from(atob(data), (c) =>
+            c.charCodeAt(0),
+          ).buffer;
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "No book data available",
+          );
           setLoading(false);
           return;
         }
@@ -38,7 +43,7 @@ export default function ReadPage() {
         const blob = new Blob([arrayBuffer], { type: "application/epub+zip" });
         blobUrl = URL.createObjectURL(blob);
 
-        const book = (ePub as any)(blobUrl);
+        const book = ePub(blobUrl);
         const rendition = book.renderTo(viewerRef.current!, {
           width: "100%",
           height: window.innerHeight,
@@ -46,9 +51,9 @@ export default function ReadPage() {
 
         await rendition.display();
         setLoading(false);
-      } catch (err: any) {
+      } catch (err) {
         console.error("EPUB rendering failed", err);
-        setError(err?.message ?? String(err));
+        setError(err instanceof Error ? err.message : String(err));
         setLoading(false);
       }
     })();
@@ -67,12 +72,15 @@ export default function ReadPage() {
       )}
       {error && (
         <div className="flex h-screen items-center justify-center p-8">
-          <p className="text-red-500 text-center">{error}</p>
+          <p className="text-center text-red-500">{error}</p>
         </div>
       )}
       <div
         ref={viewerRef}
-        style={{ height: "100vh", display: loading || error ? "none" : "block" }}
+        style={{
+          height: "100vh",
+          display: loading || error ? "none" : "block",
+        }}
       />
     </div>
   );

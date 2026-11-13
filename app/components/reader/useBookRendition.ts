@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book, Rendition } from "epubjs";
 import { bookFileUrl, fetchProgress, saveProgress } from "@/app/lib/api";
 import { closeSelfClosedRawTextTags } from "./repairMarkup";
+import { mergePageSections } from "./mergePageSections";
 import { registerContentGestures, type TextSelection } from "./contentGestures";
 import { useRoadmapTracking } from "./roadmapTracking";
 import {
@@ -63,7 +64,6 @@ export function useBookRendition({
     if (!container) return;
 
     let destroyed = false;
-    let detachOrientation: (() => void) | null = null;
     const isCancelled = () => destroyed;
     let openedBook: Book | null = null;
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -76,7 +76,10 @@ export function useBookRendition({
     };
 
     const open = async () => {
-      const bytes = await fetchBookBytes(bookId);
+      const original = await fetchBookBytes(bookId);
+      if (destroyed) return;
+      // PDF-converted books: join one-file-per-page into chapters.
+      const { bytes, remapHref } = await mergePageSections(original);
       if (destroyed) return;
       const epubModule = await import("epubjs");
       if (destroyed) return;
@@ -91,7 +94,6 @@ export function useBookRendition({
       const scrolled = mode === "scrolled";
       const rendition = renderBook(book, container, scrolled);
       renditionRef.current = rendition;
-      if (!scrolled) detachOrientation = followOrientation(rendition);
       turnPagesWithArrowKeys(rendition);
       registerContentGestures(rendition, {
         container,
@@ -126,7 +128,12 @@ export function useBookRendition({
       // Resume where this user left off (synced across their devices).
       const savedCfi = await fetchProgress(bookId).catch(() => null);
       if (destroyed) return;
-      await displayStart(rendition, initialLocRef.current, savedCfi);
+      const initialLoc = initialLocRef.current;
+      await displayStart(
+        rendition,
+        initialLoc ? remapHref(initialLoc) : undefined,
+        savedCfi,
+      );
       if (destroyed) return;
 
       rendition.themes.fontSize(`${fontScaleRef.current}%`);
@@ -149,6 +156,7 @@ export function useBookRendition({
         book,
         EpubCFI: epubModule.EpubCFI,
         rendition,
+        remapHref,
         openedViaStepLink: Boolean(initialLocRef.current),
         isCancelled,
       });
@@ -173,7 +181,6 @@ export function useBookRendition({
       destroyed = true;
       if (saveTimer) clearTimeout(saveTimer);
       flushPending();
-      detachOrientation?.();
       openedBook?.destroy();
       renditionRef.current = null;
       bookRef.current = null;
@@ -228,18 +235,9 @@ function renderBook(book: Book, container: HTMLElement, scrolled: boolean) {
     // prepend/append, so it doesn't jump at chapter seams).
     flow: scrolled ? "scrolled-doc" : "paginated",
     manager: "default",
-    spread: "auto",
+    // Always one page across the full width — no two-page spread.
+    spread: "none",
   });
-}
-
-// One column in portrait, two-page spread in landscape. Returns the detach.
-function followOrientation(rendition: Rendition): () => void {
-  const portrait = window.matchMedia("(orientation: portrait)");
-  const applySpread = () =>
-    rendition.spread(portrait.matches ? "none" : "auto");
-  applySpread();
-  portrait.addEventListener("change", applySpread);
-  return () => portrait.removeEventListener("change", applySpread);
 }
 
 function turnPagesWithArrowKeys(rendition: Rendition) {
@@ -250,8 +248,8 @@ function turnPagesWithArrowKeys(rendition: Rendition) {
 }
 
 // A roadmap step jump (initialLoc) wins over the saved position — but a
-// bad/unresolvable section must never blank out the whole book, so fall back
-// to the saved position (or the start) if the jump fails.
+// bad/unresolvable target must never blank out the whole book, so fall back
+// to the saved position, then the start.
 async function displayStart(
   rendition: Rendition,
   initialLoc: string | undefined,
@@ -260,8 +258,13 @@ async function displayStart(
   try {
     await rendition.display(initialLoc ?? savedCfi ?? undefined);
   } catch {
-    if (initialLoc) {
-      await rendition.display(savedCfi ?? undefined).catch(() => {});
+    if (initialLoc && savedCfi) {
+      const ok = await rendition.display(savedCfi).then(
+        () => true,
+        () => false,
+      );
+      if (ok) return;
     }
+    await rendition.display().catch(() => {});
   }
 }

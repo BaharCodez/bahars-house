@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import AmbientMusic from "../AmbientMusic";
-import ThemePicker from "../ThemePicker";
 import type { ReadingMode } from "./useBookRendition";
 
 const PILL_BUTTON =
@@ -85,7 +84,6 @@ export default function ReaderHeader({
           {mode === "paginated" ? "📖 Pages" : "📜 Scroll · beta"}
         </button>
         <AmbientMusic />
-        <ThemePicker />
         <ShareButton />
         <button
           onClick={onToggleNotes}

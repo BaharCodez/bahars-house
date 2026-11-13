@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import SignedInBar from "./SignedInBar";
 import RoomBanner from "./RoomBanner";
 import { useFileDrop } from "@/app/lib/useFileDrop";
@@ -16,37 +16,11 @@ interface LibraryProps {
   onFile: (file: File) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  onSetCover: (id: string, file: File) => void;
 }
 
 // How many books sit on one shelf before starting the next.
 const PER_SHELF = 5;
-
-// Potted plants that sit on the shelf ledges (Plant Shop theme only).
-// Heights are per-sprite so tall plants and little bowls keep their
-// relative proportions.
-const SHELF_PLANTS = [
-  { src: "/decor/plants/plant-1.png", size: "h-12 sm:h-14" }, // leafy pot
-  { src: "/decor/plants/plant-2.png", size: "h-6 sm:h-7" }, // red bowl
-  { src: "/decor/plants/plant-3.png", size: "h-12 sm:h-14" }, // violet
-  { src: "/decor/plants/plant-4.png", size: "h-12 sm:h-14" }, // cactus
-  { src: "/decor/plants/plant-5.png", size: "h-9 sm:h-10" }, // small cactus
-  { src: "/decor/plants/plant-6.png", size: "h-6 sm:h-7" }, // flower bowl
-  { src: "/decor/plants/plant-7.png", size: "h-6 sm:h-7" }, // berry bowl
-  { src: "/decor/plants/plant-8.png", size: "h-6 sm:h-7" }, // sprout bowl
-] as const;
-
-function ShelfPlant({ index }: { index: number }) {
-  const plant = SHELF_PLANTS[index % SHELF_PLANTS.length];
-  // translate-y-3 cancels the shelf row's pb-3 so pots rest on the ledge.
-  return (
-    <img
-      src={plant.src}
-      alt=""
-      aria-hidden
-      className={`plant-decor pointer-events-none w-auto shrink-0 translate-y-3 select-none [image-rendering:pixelated] ${plant.size}`}
-    />
-  );
-}
 
 export default function Library({
   books,
@@ -57,6 +31,7 @@ export default function Library({
   onFile,
   onOpen,
   onDelete,
+  onSetCover,
 }: LibraryProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { dragging, dropHandlers } = useFileDrop(onFile);
@@ -68,20 +43,6 @@ export default function Library({
 
   return (
     <div className="flex flex-1 flex-col" {...dropHandlers}>
-      {/* plant-shop scene anchored in the corners — Plant Shop theme only */}
-      <div className="plant-decor pointer-events-none fixed inset-0 -z-10">
-        <img
-          src="/decor/gardener.png"
-          alt=""
-          className="absolute bottom-0 left-0 h-44 w-auto sm:h-72"
-        />
-        <img
-          src="/decor/plantshelf.png"
-          alt=""
-          className="absolute right-0 bottom-0 h-36 w-auto sm:h-56"
-        />
-      </div>
-
       <SignedInBar userName={userName} />
 
       <RoomBanner
@@ -125,19 +86,16 @@ export default function Library({
           {shelves.map((shelf, shelfIndex) => (
             <section key={shelfIndex}>
               <div className="touch-scroll flex items-end gap-5 overflow-x-auto px-1 pb-3">
-                {shelfIndex % 2 === 1 && (
-                  <ShelfPlant index={shelfIndex * 2 + 1} />
-                )}
                 {shelf.map((book) => (
                   <BookSpine
                     key={book.id}
                     book={book}
                     onOpen={onOpen}
                     onDelete={onDelete}
+                    onSetCover={onSetCover}
                     canManageBooks={canManageBooks}
                   />
                 ))}
-                <ShelfPlant index={shelfIndex * 2} />
               </div>
               {/* wooden shelf ledge */}
               <div
@@ -172,13 +130,34 @@ function BookSpine({
   book,
   onOpen,
   onDelete,
+  onSetCover,
   canManageBooks,
 }: {
   book: BookMeta;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  onSetCover: (id: string, file: File) => void;
   canManageBooks: boolean;
 }) {
+  const coverInput = useRef<HTMLInputElement>(null);
+  const [pickingCover, setPickingCover] = useState(false);
+
+  // While the cover panel is open, a pasted image becomes this book's cover.
+  useEffect(() => {
+    if (!pickingCover) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const file = Array.from(e.clipboardData?.files ?? []).find((f) =>
+        f.type.startsWith("image/"),
+      );
+      if (!file) return;
+      e.preventDefault();
+      setPickingCover(false);
+      onSetCover(book.id, file);
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [pickingCover, book.id, onSetCover]);
+
   return (
     <div className="flex w-28 shrink-0 flex-col sm:w-32">
       <button
@@ -218,6 +197,33 @@ function BookSpine({
       <div className="text-ink-soft mt-0.5 flex items-center justify-center gap-2 text-[11px]">
         <span className="truncate">{book.mine ? "you" : book.ownerName}</span>
         {canManageBooks && (
+          <>
+            <button
+              type="button"
+              onClick={() => setPickingCover((open) => !open)}
+              aria-label={`Set cover for ${book.title}`}
+              title="Set cover"
+              className="hover:text-ink transition-colors"
+            >
+              🖼
+            </button>
+            <input
+              ref={coverInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) {
+                  setPickingCover(false);
+                  onSetCover(book.id, file);
+                }
+              }}
+            />
+          </>
+        )}
+        {canManageBooks && (
           <button
             type="button"
             onClick={() => onDelete(book.id)}
@@ -229,6 +235,25 @@ function BookSpine({
           </button>
         )}
       </div>
+      {canManageBooks && pickingCover && (
+        <div className="bg-surface text-ink-soft mt-1 flex flex-col items-center gap-1 rounded-md p-2 text-center text-[11px] ring-1 ring-black/10">
+          <button
+            type="button"
+            onClick={() => coverInput.current?.click()}
+            className="text-ink underline"
+          >
+            upload image
+          </button>
+          <span>or paste one (⌘V)</span>
+          <button
+            type="button"
+            onClick={() => setPickingCover(false)}
+            className="hover:text-ink"
+          >
+            cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }

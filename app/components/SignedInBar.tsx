@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import ThemePicker from "./ThemePicker";
 import AmbientMusic from "./AmbientMusic";
 
 // `userName` is null for visitors browsing the public shelf.
@@ -26,7 +25,6 @@ export default function SignedInBar({ userName }: { userName: string | null }) {
           build {process.env.NEXT_PUBLIC_BUILD}
         </span>
         <AmbientMusic />
-        <ThemePicker />
         {userName !== null && (
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

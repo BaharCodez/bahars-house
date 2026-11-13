@@ -40,7 +40,8 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
   // of one-tap kind buttons — buttons, not a text composer, so the keyboard
   // never opens mid-selection (on iOS that collapses the selection).
   const [candidate, setCandidate] = useState<TextSelection | null>(null);
-  const book = useBookRendition({
+  // Refs split out so reading `book.*` during render isn't a ref access.
+  const { viewerRef, renditionRef, ...book } = useBookRendition({
     bookId,
     mode,
     initialLoc,
@@ -51,7 +52,7 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
   // The note shown when you tap a highlight in the book.
   const [activeNote, setActiveNote] = useState<Annotation | null>(null);
   useHighlights({
-    renditionRef: book.renditionRef,
+    renditionRef,
     ready: book.ready,
     annotations,
     onTap: setActiveNote,
@@ -197,7 +198,7 @@ export default function Reader({ bookId, initialLoc, onClose }: ReaderProps) {
 
         <div className="relative flex min-w-0 flex-1 items-stretch">
           <div className="relative min-w-0 flex-1">
-            <div ref={book.viewerRef} className="h-full w-full" />
+            <div ref={viewerRef} className="h-full w-full" />
             {/* Scroll mode navigates by scrolling + over-scroll at chapter
                 ends instead. */}
             {mode === "paginated" && (
