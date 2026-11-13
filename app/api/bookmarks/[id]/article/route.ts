@@ -3,29 +3,28 @@ import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { articleInputSchema } from "@/app/lib/validation";
 import { ArticleError, articleFromText, fetchArticle } from "@/app/lib/article";
+import {
+  emptyResponse,
+  readJson,
+  validationError,
+} from "@/app/lib/routeHelpers";
 
 // Pull a shelved article's body into the house — fetched from the source, or
 // pasted in when the site won't hand it over. Owner-only: this caches someone
 // else's writing, and the reader that shows it is hers alone.
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/bookmarks/[id]/article">,
 ) {
   const denied = await requireOwner();
   if (denied) return denied;
 
   const { id } = await params;
-  const body = await req.json().catch(() => null);
-  const parsed = articleInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid request." },
-      { status: 400 },
-    );
-  }
+  const parsed = articleInputSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid request.");
 
   const bookmark = await prisma.bookmark.findUnique({ where: { id } });
-  if (!bookmark) return new NextResponse(null, { status: 404 });
+  if (!bookmark) return emptyResponse(404);
 
   try {
     const article =

@@ -3,19 +3,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 
-// Returns the signed-in user's id, or null when there is no session.
+// The signed-in user's id, or null when there is no session.
 export async function currentUserId(): Promise<string | null> {
   const session = await auth();
   return session?.user?.id ?? null;
-}
-
-// The owner email(s) from OWNER_EMAIL — a comma-separated list, so more than
-// one account (e.g. two of Bahar's Google logins) can be the keeper.
-function ownerEmails(): string[] {
-  return (process.env.OWNER_EMAIL ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
 }
 
 // Who a write belongs to: the signed-in user if there is one, otherwise the
@@ -35,10 +26,7 @@ export async function actorUserId(): Promise<string | null> {
     if (owner) return owner.id;
   }
 
-  const oldest = await prisma.user.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
+  const oldest = await oldestUser();
   return oldest?.id ?? null;
 }
 
@@ -48,25 +36,13 @@ export async function isOwner(): Promise<boolean> {
   const session = await auth();
   if (!session?.user) return false;
 
-  // The JWT session can arrive without the email; fall back to the user id
-  // (always set) and look the email up, so the owner check never misses.
-  let email = session.user.email?.toLowerCase() ?? null;
-  if (!email && session.user.id) {
-    const u = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { email: true },
-    });
-    email = u?.email?.toLowerCase() ?? null;
-  }
+  const email = await signedInEmail(session.user);
   if (!email) return false;
 
   const emails = ownerEmails();
   if (emails.length) return emails.includes(email);
 
-  const oldest = await prisma.user.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { email: true },
-  });
+  const oldest = await oldestUser();
   return oldest?.email?.toLowerCase() === email;
 }
 
@@ -78,4 +54,37 @@ export async function requireOwner(): Promise<NextResponse | null> {
     { error: "Only the keeper of this house can change things — sign in." },
     { status: 401 },
   );
+}
+
+// OWNER_EMAIL is a comma-separated list, so more than one account (e.g. two
+// of Bahar's Google logins) can be the keeper.
+function ownerEmails(): string[] {
+  return (process.env.OWNER_EMAIL ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function oldestUser() {
+  return prisma.user.findFirst({
+    orderBy: { createdAt: "asc" },
+    select: { id: true, email: true },
+  });
+}
+
+// The JWT session can arrive without the email; fall back to the user id
+// (always set) and look the email up, so the owner check never misses.
+async function signedInEmail(user: {
+  id?: string;
+  email?: string | null;
+}): Promise<string | null> {
+  const sessionEmail = user.email?.toLowerCase();
+  if (sessionEmail) return sessionEmail;
+  if (!user.id) return null;
+
+  const stored = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { email: true },
+  });
+  return stored?.email?.toLowerCase() ?? null;
 }

@@ -2,40 +2,39 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { postInputSchema } from "@/app/lib/validation";
+import {
+  emptyResponse,
+  readJson,
+  validationError,
+} from "@/app/lib/routeHelpers";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/posts/[id]">,
 ) {
   const { id } = await params;
   const post = await prisma.post.findUnique({ where: { id } });
-  if (!post) return new NextResponse(null, { status: 404 });
+  if (!post) return emptyResponse(404);
 
   return NextResponse.json(post);
 }
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/posts/[id]">,
 ) {
   const denied = await requireOwner();
   if (denied) return denied;
 
   const { id } = await params;
-  const body = await req.json().catch(() => null);
-  const parsed = postInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid post." },
-      { status: 400 },
-    );
-  }
+  const parsed = postInputSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid post.");
 
   const existing = await prisma.post.findUnique({
     where: { id },
     select: { publishedAt: true },
   });
-  if (!existing) return new NextResponse(null, { status: 404 });
+  if (!existing) return emptyResponse(404);
 
   const { published, ...rest } = parsed.data;
   const post = await prisma.post.update({
@@ -52,13 +51,13 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/posts/[id]">,
 ) {
   const denied = await requireOwner();
   if (denied) return denied;
 
   const { id } = await params;
   const deleted = await prisma.post.delete({ where: { id } }).catch(() => null);
-  if (!deleted) return new NextResponse(null, { status: 404 });
-  return new NextResponse(null, { status: 204 });
+  if (!deleted) return emptyResponse(404);
+  return emptyResponse(204);
 }

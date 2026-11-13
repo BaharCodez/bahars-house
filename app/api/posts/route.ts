@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { postInputSchema } from "@/app/lib/validation";
+import { readJson, validationError } from "@/app/lib/routeHelpers";
 
 // Everything is public — drafts too; they're just not "published" yet.
 export async function GET() {
@@ -23,14 +24,8 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
 
-  const body = await req.json().catch(() => null);
-  const parsed = postInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid post." },
-      { status: 400 },
-    );
-  }
+  const parsed = postInputSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid post.");
 
   const { published, ...rest } = parsed.data;
   const post = await prisma.post.create({

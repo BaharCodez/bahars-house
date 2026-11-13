@@ -8,6 +8,11 @@ import {
   clearSetting,
   setSetting,
 } from "@/app/lib/settings";
+import {
+  emptyResponse,
+  readJson,
+  validationError,
+} from "@/app/lib/routeHelpers";
 
 // Link a LeetCode account to the DSA board. The handle is checked against
 // LeetCode before it's saved, so a typo says so now rather than silently
@@ -16,20 +21,14 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
 
-  const body = await req.json().catch(() => null);
-  const parsed = leetcodeUsernameSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid username." },
-      { status: 400 },
-    );
-  }
+  const parsed = leetcodeUsernameSchema.safeParse(await readJson(req));
+  if (!parsed.success)
+    return validationError(parsed.error, "Invalid username.");
 
   try {
-    // Save the spelling LeetCode itself uses.
-    const username = await checkProfile(parsed.data.username);
-    await setSetting(LEETCODE_USER, username);
-    return NextResponse.json({ username });
+    const canonicalUsername = await checkProfile(parsed.data.username);
+    await setSetting(LEETCODE_USER, canonicalUsername);
+    return NextResponse.json({ username: canonicalUsername });
   } catch (e) {
     if (e instanceof LeetCodeError) {
       return NextResponse.json({ error: e.message }, { status: 422 });
@@ -45,5 +44,5 @@ export async function DELETE() {
 
   await clearSetting(LEETCODE_USER);
   await clearSetting(LEETCODE_SYNCED_AT);
-  return new NextResponse(null, { status: 204 });
+  return emptyResponse(204);
 }

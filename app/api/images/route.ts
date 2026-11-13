@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 
-const MAX_BYTES = 4 * 1024 * 1024; // keep under serverless body limits
+// Kept under serverless request-body limits.
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 // Upload an image for a post (multipart form: file). Returns its URL.
 export async function POST(req: Request) {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  if (file.size > MAX_BYTES) {
+  if (file.size > MAX_IMAGE_BYTES) {
     return NextResponse.json(
       { error: "Images need to be under 4MB." },
       { status: 400 },

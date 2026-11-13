@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { actorUserId, requireOwner } from "@/app/lib/session";
+import { emptyResponse } from "@/app/lib/routeHelpers";
 
 // One shared library, no sign-in needed: anonymous visitors act as the
 // site owner, so `mine` lights up their books and the delete buttons.
@@ -40,30 +41,32 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
   const userId = await actorUserId();
-  if (!userId) return new NextResponse(null, { status: 401 });
+  if (!userId) return emptyResponse(401);
 
   const form = await req.formData();
   const file = form.get("file");
-  const title = String(form.get("title") ?? "").trim() || "Untitled";
-  const author = String(form.get("author") ?? "").trim() || "Unknown author";
+  const title = trimmedField(form, "title") || "Untitled";
+  const author = trimmedField(form, "author") || "Unknown author";
   const coverDataUrl = form.get("coverDataUrl");
 
   if (!(file instanceof Blob)) {
     return NextResponse.json({ error: "Missing file." }, { status: 400 });
   }
 
-  const data = Buffer.from(await file.arrayBuffer());
-
   const book = await prisma.book.create({
     data: {
       title,
       author,
       coverDataUrl: typeof coverDataUrl === "string" ? coverDataUrl : null,
-      data,
+      data: Buffer.from(await file.arrayBuffer()),
       ownerId: userId,
     },
     select: { id: true, title: true, author: true, coverDataUrl: true },
   });
 
   return NextResponse.json(book, { status: 201 });
+}
+
+function trimmedField(form: FormData, name: string): string {
+  return String(form.get(name) ?? "").trim();
 }

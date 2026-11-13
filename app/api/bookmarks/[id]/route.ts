@@ -2,19 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { bookmarkPatchSchema } from "@/app/lib/validation";
+import { emptyResponse, readJson } from "@/app/lib/routeHelpers";
 
 // Star / unstar a read, or move it to another shelf.
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/bookmarks/[id]">,
 ) {
   const denied = await requireOwner();
   if (denied) return denied;
 
   const { id } = await params;
-  const body = await req.json().catch(() => null);
-  const parsed = bookmarkPatchSchema.safeParse(body);
-  if (!parsed.success) return new NextResponse(null, { status: 400 });
+  const parsed = bookmarkPatchSchema.safeParse(await readJson(req));
+  if (!parsed.success) return emptyResponse(400);
 
   const bookmark = await prisma.bookmark
     .update({
@@ -24,13 +24,13 @@ export async function PATCH(
       select: { id: true, url: true, title: true, favorite: true, shelf: true },
     })
     .catch(() => null);
-  if (!bookmark) return new NextResponse(null, { status: 404 });
+  if (!bookmark) return emptyResponse(404);
   return NextResponse.json(bookmark);
 }
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/bookmarks/[id]">,
 ) {
   const denied = await requireOwner();
   if (denied) return denied;
@@ -39,6 +39,6 @@ export async function DELETE(
   const deleted = await prisma.bookmark
     .delete({ where: { id } })
     .catch(() => null);
-  if (!deleted) return new NextResponse(null, { status: 404 });
-  return new NextResponse(null, { status: 204 });
+  if (!deleted) return emptyResponse(404);
+  return emptyResponse(204);
 }

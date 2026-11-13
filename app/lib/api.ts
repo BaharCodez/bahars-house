@@ -8,7 +8,7 @@ import type {
   BookMeta,
 } from "./types";
 
-async function json<T>(res: Response): Promise<T> {
+async function parseJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? `Request failed (${res.status})`);
@@ -16,10 +16,22 @@ async function json<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function ensureOk(res: Response, failureMessage: string): void {
+  if (!res.ok) throw new Error(failureMessage);
+}
+
+function jsonBody(method: "POST" | "PUT" | "PATCH", body: unknown): RequestInit {
+  return {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  };
+}
+
 // --- Books ---------------------------------------------------------------
 
 export async function fetchBooks(): Promise<BookMeta[]> {
-  return json<BookMeta[]>(await fetch("/api/books"));
+  return parseJson<BookMeta[]>(await fetch("/api/books"));
 }
 
 export async function uploadBook(
@@ -31,26 +43,22 @@ export async function uploadBook(
   form.append("title", meta.title);
   form.append("author", meta.author);
   if (meta.coverDataUrl) form.append("coverDataUrl", meta.coverDataUrl);
-  return json<{ id: string }>(
+  return parseJson<{ id: string }>(
     await fetch("/api/books", { method: "POST", body: form }),
   );
 }
 
 export async function deleteBook(id: string): Promise<void> {
   const res = await fetch(`/api/books/${id}`, { method: "DELETE" });
-  if (!res.ok && res.status !== 204) throw new Error("Couldn't delete book.");
+  ensureOk(res, "Couldn't delete book.");
 }
 
 export async function updateBookMetadata(
   id: string,
   meta: { title?: string; author?: string; coverDataUrl?: string },
 ): Promise<void> {
-  const res = await fetch(`/api/books/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(meta),
-  });
-  if (!res.ok) throw new Error("Couldn't update book metadata.");
+  const res = await fetch(`/api/books/${id}`, jsonBody("PATCH", meta));
+  ensureOk(res, "Couldn't update book metadata.");
 }
 
 // URL the reader fetches the raw EPUB bytes from.
@@ -61,19 +69,15 @@ export function bookFileUrl(id: string): string {
 // --- Annotations ---------------------------------------------------------
 
 export async function fetchAnnotations(bookId: string): Promise<Annotation[]> {
-  return json<Annotation[]>(await fetch(`/api/books/${bookId}/annotations`));
+  return parseJson<Annotation[]>(await fetch(`/api/books/${bookId}/annotations`));
 }
 
 export async function createAnnotation(
   bookId: string,
   input: AnnotationInput,
 ): Promise<Annotation> {
-  return json<Annotation>(
-    await fetch(`/api/books/${bookId}/annotations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    }),
+  return parseJson<Annotation>(
+    await fetch(`/api/books/${bookId}/annotations`, jsonBody("POST", input)),
   );
 }
 
@@ -82,19 +86,14 @@ export async function patchAnnotation(
   id: string,
   patch: { kind?: AnnotationKind; comment?: string },
 ): Promise<Annotation> {
-  return json<Annotation>(
-    await fetch(`/api/annotations/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    }),
+  return parseJson<Annotation>(
+    await fetch(`/api/annotations/${id}`, jsonBody("PATCH", patch)),
   );
 }
 
 export async function deleteAnnotation(id: string): Promise<void> {
   const res = await fetch(`/api/annotations/${id}`, { method: "DELETE" });
-  if (!res.ok && res.status !== 204)
-    throw new Error("Couldn't delete annotation.");
+  ensureOk(res, "Couldn't delete annotation.");
 }
 
 // --- Reading progress (per user, synced across devices) ------------------
@@ -102,16 +101,14 @@ export async function deleteAnnotation(id: string): Promise<void> {
 export async function fetchProgress(bookId: string): Promise<string | null> {
   const res = await fetch(`/api/books/${bookId}/progress`);
   if (!res.ok) return null;
-  const data = (await res.json()) as { cfi: string | null };
-  return data.cfi;
+  const { cfi } = (await res.json()) as { cfi: string | null };
+  return cfi;
 }
 
 export async function saveProgress(bookId: string, cfi: string): Promise<void> {
-  await fetch(`/api/books/${bookId}/progress`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cfi }),
-  }).catch(() => {});
+  await fetch(`/api/books/${bookId}/progress`, jsonBody("PUT", { cfi })).catch(
+    () => {},
+  );
 }
 
 // --- Roadmap reading sync ------------------------------------------------
@@ -138,9 +135,8 @@ export async function markRoadmapStepsRead(
   ids: string[],
 ): Promise<void> {
   if (!ids.length) return;
-  await fetch(`/api/roadmap-steps/for-book/${bookId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ doneIds: ids }),
-  }).catch(() => {});
+  await fetch(
+    `/api/roadmap-steps/for-book/${bookId}`,
+    jsonBody("PATCH", { doneIds: ids }),
+  ).catch(() => {});
 }

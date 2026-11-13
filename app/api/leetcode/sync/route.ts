@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import {
   LeetCodeError,
+  type RecentSolve,
   problemsBySlug,
   recentSolves,
 } from "@/app/lib/leetcode";
@@ -12,6 +13,8 @@ import {
   getSetting,
   setSetting,
 } from "@/app/lib/settings";
+
+type DrilledProblem = { url: string; name: string; pattern: string };
 
 // Pull the linked account's recent accepted submissions and tick off any that
 // the DSA board drills. Owner-only.
@@ -31,7 +34,7 @@ export async function POST() {
     );
   }
 
-  let solves;
+  let solves: RecentSolve[];
   try {
     solves = await recentSolves(username);
   } catch (e) {
@@ -41,52 +44,51 @@ export async function POST() {
     throw e;
   }
 
-  const drilled = problemsBySlug();
-  const matched = solves
-    .map((s) => ({ solve: s, problem: drilled.get(s.slug) }))
-    .filter(
-      (
-        m,
-      ): m is {
-        solve: (typeof solves)[0];
-        problem: NonNullable<typeof m.problem>;
-      } => Boolean(m.problem),
-    );
+  const solvedDrills = drilledProblemsAmong(solves);
+  const added = await autoLogUntouched(solvedDrills);
 
-  const already = await prisma.problemLog.findMany({
-    where: { url: { in: matched.map((m) => m.problem.url) } },
-    select: { url: true },
-  });
-  const logged = new Set(already.map((p) => p.url));
-
-  const fresh = matched.filter((m) => !logged.has(m.problem.url));
-  if (fresh.length) {
-    await prisma.problemLog.createMany({
-      data: fresh.map((m) => ({
-        url: m.problem.url,
-        name: m.problem.name,
-        pattern: m.problem.pattern,
-        status: "solved",
-        auto: true,
-      })),
-      skipDuplicates: true,
-    });
-  }
-
-  const syncedAt = new Date();
-  await setSetting(LEETCODE_SYNCED_AT, syncedAt.toISOString());
+  const syncedAt = new Date().toISOString();
+  await setSetting(LEETCODE_SYNCED_AT, syncedAt);
 
   return NextResponse.json({
     username,
-    syncedAt: syncedAt.toISOString(),
+    syncedAt,
     // What the board should tick right now, without a reload.
-    added: fresh.map((m) => ({
-      url: m.problem.url,
-      name: m.problem.name,
-      pattern: m.problem.pattern,
-    })),
+    added: added.map(({ url, name, pattern }) => ({ url, name, pattern })),
     // How many recent solves weren't part of the board at all — context for
     // "I solved loads and nothing moved".
-    offBoard: solves.length - matched.length,
+    offBoard: solves.length - solvedDrills.length,
   });
+}
+
+function drilledProblemsAmong(solves: RecentSolve[]): DrilledProblem[] {
+  const drilled = problemsBySlug();
+  return solves.flatMap((solve) => {
+    const problem = drilled.get(solve.slug);
+    return problem ? [problem] : [];
+  });
+}
+
+async function autoLogUntouched(
+  problems: DrilledProblem[],
+): Promise<DrilledProblem[]> {
+  const alreadyLogged = await prisma.problemLog.findMany({
+    where: { url: { in: problems.map((p) => p.url) } },
+    select: { url: true },
+  });
+  const loggedUrls = new Set(alreadyLogged.map((p) => p.url));
+  const untouched = problems.filter((p) => !loggedUrls.has(p.url));
+  if (!untouched.length) return untouched;
+
+  await prisma.problemLog.createMany({
+    data: untouched.map((p) => ({
+      url: p.url,
+      name: p.name,
+      pattern: p.pattern,
+      status: "solved",
+      auto: true,
+    })),
+    skipDuplicates: true,
+  });
+  return untouched;
 }

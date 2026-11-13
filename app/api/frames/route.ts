@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { frameInputSchema } from "@/app/lib/validation";
+import { readJson, validationError } from "@/app/lib/routeHelpers";
 
 // The hallway wall is public — anyone can look at the frames.
 export async function GET() {
@@ -16,14 +17,8 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
 
-  const body = await req.json().catch(() => null);
-  const parsed = frameInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid frame." },
-      { status: 400 },
-    );
-  }
+  const parsed = frameInputSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid frame.");
 
   const { link, years, ...rest } = parsed.data;
   const frame = await prisma.frame.create({

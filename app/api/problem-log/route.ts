@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { problemLogSchema } from "@/app/lib/validation";
+import {
+  emptyResponse,
+  readJson,
+  validationError,
+} from "@/app/lib/routeHelpers";
 
 // Log a drilled problem: the verdict (solved / struggled), how hard it felt
 // (1 brutal → 5 easy), and your own notes on it. Any part can be sent alone,
@@ -14,19 +19,13 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
 
-  const body = await req.json().catch(() => null);
-  const parsed = problemLogSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid problem." },
-      { status: 400 },
-    );
-  }
+  const parsed = problemLogSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid problem.");
   const { url, name, pattern, status, rating, note } = parsed.data;
 
   if (status === "clear") {
     await prisma.problemLog.deleteMany({ where: { url } });
-    return new NextResponse(null, { status: 204 });
+    return emptyResponse(204);
   }
 
   const existing = await prisma.problemLog.findUnique({ where: { url } });

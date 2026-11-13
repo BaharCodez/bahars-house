@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { dailyTickSchema } from "@/app/lib/validation";
+import { readJson, validationError } from "@/app/lib/routeHelpers";
 
 // The streak board is public, like the rest of the house.
 export async function GET() {
@@ -18,14 +19,8 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
 
-  const body = await req.json().catch(() => null);
-  const parsed = dailyTickSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid tick." },
-      { status: 400 },
-    );
-  }
+  const parsed = dailyTickSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid tick.");
 
   const { kind, day } = parsed.data;
   const tick = await prisma.dailyTick.upsert({

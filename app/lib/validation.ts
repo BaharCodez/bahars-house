@@ -1,5 +1,11 @@
 import * as z from "zod";
 
+const NOTHING_TO_CHANGE = { message: "Nothing to change." };
+
+function changesSomething(patch: object): boolean {
+  return Object.values(patch).some((value) => value !== undefined);
+}
+
 export const credentialsSchema = z.object({
   email: z.email("Please enter a valid email.").trim().toLowerCase(),
   password: z.string().min(8, "Password must be at least 8 characters."),
@@ -31,26 +37,23 @@ export const annotationPatchSchema = z
     kind: annotationKindSchema.optional(),
     comment: z.string().max(5000).optional(),
   })
-  .refine((v) => v.kind !== undefined || v.comment !== undefined, {
-    message: "Nothing to change.",
-  });
+  .refine(changesSomething, NOTHING_TO_CHANGE);
 
 // Freeform topic labels: trimmed, de-duplicated (case-insensitive), capped.
 export const tagsSchema = z
   .array(z.string())
   .default([])
-  .transform((tags) => {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const raw of tags) {
+  .transform((rawTags) => {
+    const seenKeys = new Set<string>();
+    const tags: string[] = [];
+    for (const raw of rawTags) {
       const tag = raw.trim().replace(/\s+/g, " ").slice(0, 40);
       const key = tag.toLowerCase();
-      if (tag && !seen.has(key)) {
-        seen.add(key);
-        out.push(tag);
-      }
+      if (!tag || seenKeys.has(key)) continue;
+      seenKeys.add(key);
+      tags.push(tag);
     }
-    return out.slice(0, 12);
+    return tags.slice(0, 12);
   });
 
 // A writing-room blog post (markdown body).
@@ -116,9 +119,7 @@ export const bookmarkPatchSchema = z
     favorite: z.boolean().optional(),
     shelf: shelfNameSchema.optional(),
   })
-  .refine((v) => v.favorite !== undefined || v.shelf !== undefined, {
-    message: "Nothing to change.",
-  });
+  .refine(changesSomething, NOTHING_TO_CHANGE);
 
 // How well a passage landed: could explain it / sort of / no idea.
 export const graspSchema = z.enum(["got", "half", "lost"]);
@@ -141,9 +142,7 @@ export const highlightPatchSchema = z
     grasp: graspSchema.optional(),
     note: z.string().max(2000).trim().optional(),
   })
-  .refine((v) => v.grasp !== undefined || v.note !== undefined, {
-    message: "Nothing to change.",
-  });
+  .refine(changesSomething, NOTHING_TO_CHANGE);
 
 // Ticking a roadmap step off, or rating how solid it feels (0 unrated,
 // 1 lost, 2 shaky, 3 solid).
@@ -152,9 +151,7 @@ export const roadmapStepPatchSchema = z
     done: z.boolean().optional(),
     confidence: z.number().int().min(0).max(3).optional(),
   })
-  .refine((v) => v.done !== undefined || v.confidence !== undefined, {
-    message: "Nothing to change.",
-  });
+  .refine(changesSomething, NOTHING_TO_CHANGE);
 
 // A LeetCode handle: their own allowed character set, no URLs.
 export const leetcodeUsernameSchema = z.object({

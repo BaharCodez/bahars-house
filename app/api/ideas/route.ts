@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { requireOwner } from "@/app/lib/session";
 import { ideaInputSchema } from "@/app/lib/validation";
+import { readJson, validationError } from "@/app/lib/routeHelpers";
 
-// The hobby board is wide open — look, pin, solve.
+// The hobby board is public to look at; only the owner pins notes.
 export async function GET() {
   const ideas = await prisma.idea.findMany({
     orderBy: { createdAt: "asc" },
@@ -15,14 +16,8 @@ export async function POST(req: Request) {
   const denied = await requireOwner();
   if (denied) return denied;
 
-  const body = await req.json().catch(() => null);
-  const parsed = ideaInputSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid idea." },
-      { status: 400 },
-    );
-  }
+  const parsed = ideaInputSchema.safeParse(await readJson(req));
+  if (!parsed.success) return validationError(parsed.error, "Invalid idea.");
 
   const idea = await prisma.idea.create({ data: parsed.data });
   return NextResponse.json(idea, { status: 201 });

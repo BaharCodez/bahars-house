@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { currentUserId } from "@/app/lib/session";
+import { emptyResponse, readJson } from "@/app/lib/routeHelpers";
 
 // The signed-in user's reading position in this book (synced across devices).
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/books/[id]/progress">,
 ) {
   // currentUserId, not actorUserId: the owner fallback meant an anonymous
   // visitor opening a book resumed from the owner's position, quietly leaking
@@ -24,22 +25,26 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/books/[id]/progress">,
 ) {
   const userId = await currentUserId();
-  if (!userId) return new NextResponse(null, { status: 401 });
+  if (!userId) return emptyResponse(401);
 
   const { id } = await params;
-  const body = await req.json().catch(() => null);
-  const cfi = typeof body?.cfi === "string" ? body.cfi : null;
-  if (!cfi)
+  const cfi = cfiFrom(await readJson(req));
+  if (!cfi) {
     return NextResponse.json({ error: "Missing cfi." }, { status: 400 });
+  }
 
   await prisma.readingProgress.upsert({
     where: { userId_bookId: { userId, bookId: id } },
     create: { userId, bookId: id, cfi },
     update: { cfi },
   });
+  return emptyResponse(204);
+}
 
-  return new NextResponse(null, { status: 204 });
+function cfiFrom(body: unknown): string | null {
+  const cfi = (body as { cfi?: unknown } | null)?.cfi;
+  return typeof cfi === "string" ? cfi : null;
 }

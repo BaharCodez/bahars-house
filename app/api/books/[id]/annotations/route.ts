@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { currentUserId } from "@/app/lib/session";
 import { annotationInputSchema } from "@/app/lib/validation";
+import { emptyResponse, readJson } from "@/app/lib/routeHelpers";
+import {
+  ANNOTATION_FIELDS,
+  toAnnotationJson,
+} from "@/app/lib/routeAnnotations";
 
 // Everyone reading a book sees everyone's notes — visitors included; only
 // writing them requires an account.
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/books/[id]/annotations">,
 ) {
   // currentUserId, not actorUserId: the owner fallback would mark the owner's
   // notes as `mine` for anonymous visitors, showing them delete buttons that
@@ -18,81 +23,36 @@ export async function GET(
   const annotations = await prisma.annotation.findMany({
     where: { bookId: id },
     orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      cfiRange: true,
-      text: true,
-      comment: true,
-      kind: true,
-      createdAt: true,
-      userId: true,
-      user: { select: { name: true, image: true } },
-    },
+    select: ANNOTATION_FIELDS,
   });
 
   return NextResponse.json(
-    annotations.map((a) => ({
-      id: a.id,
-      cfiRange: a.cfiRange,
-      text: a.text,
-      comment: a.comment,
-      kind: a.kind,
-      createdAt: a.createdAt.getTime(),
-      authorId: a.userId,
-      authorName: a.user.name ?? "Anonymous",
-      authorImage: a.user.image,
-      mine: a.userId === userId,
-    })),
+    annotations.map((a) => toAnnotationJson(a, a.userId === userId)),
   );
 }
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: RouteContext<"/api/books/[id]/annotations">,
 ) {
   const userId = await currentUserId();
-  if (!userId) return new NextResponse(null, { status: 401 });
+  if (!userId) return emptyResponse(401);
 
   const { id } = await params;
   const book = await prisma.book.findUnique({
     where: { id },
     select: { id: true },
   });
-  if (!book) return new NextResponse(null, { status: 404 });
+  if (!book) return emptyResponse(404);
 
-  const body = await req.json().catch(() => null);
-  const parsed = annotationInputSchema.safeParse(body);
+  const parsed = annotationInputSchema.safeParse(await readJson(req));
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid annotation." }, { status: 400 });
   }
 
   const created = await prisma.annotation.create({
     data: { ...parsed.data, bookId: id, userId },
-    select: {
-      id: true,
-      cfiRange: true,
-      text: true,
-      comment: true,
-      kind: true,
-      createdAt: true,
-      userId: true,
-      user: { select: { name: true, image: true } },
-    },
+    select: ANNOTATION_FIELDS,
   });
-
-  return NextResponse.json(
-    {
-      id: created.id,
-      cfiRange: created.cfiRange,
-      text: created.text,
-      comment: created.comment,
-      kind: created.kind,
-      createdAt: created.createdAt.getTime(),
-      authorId: created.userId,
-      authorName: created.user.name ?? "Anonymous",
-      authorImage: created.user.image,
-      mine: true,
-    },
-    { status: 201 },
-  );
+  return NextResponse.json(toAnnotationJson(created, true), { status: 201 });
 }
