@@ -21,7 +21,11 @@ export default function RoomBanner({
         alt={image.alt}
         loading="lazy"
         className="h-full w-full object-cover"
-        style={{ filter: "sepia(28%) saturate(82%) brightness(0.96)" }}
+        style={{ filter: "var(--photo-filter)" }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: "var(--photo-wash)" }}
       />
       <div
         className="absolute inset-0"

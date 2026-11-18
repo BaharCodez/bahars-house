@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import MindMap from "@/app/components/MindMap";
+import { MIND_MAP_HEIGHT, MIND_MAP_WIDTH } from "@/app/lib/mindMap";
 import ResponsiveFigmaCanvas from "@/app/components/ResponsiveFigmaCanvas";
 import SecretClippy from "@/app/components/SecretClippy";
 
@@ -20,106 +22,25 @@ type Artwork = {
 };
 const ARTWORK: Artwork[] = [
   {
-    src: "welcome-11.png",
-    left: 1154,
-    top: 1410,
-    width: 177,
-    height: 314,
-    alt: "Botanical collage",
-  },
-  {
-    src: "welcome-12.png",
-    left: 297,
-    top: 1831,
-    width: 161,
-    height: 145,
-    alt: "Patterned object",
-  },
-  {
-    src: "welcome-14.png",
-    left: 850,
-    top: 495,
-    width: 156,
-    height: 228,
-    alt: "Mushroom collage",
-  },
-  {
-    src: "welcome-3.png",
-    left: 1176,
-    top: 440,
-    width: 140,
-    height: 250,
-    alt: "Abstract collage",
-  },
-  {
-    src: "welcome-4.png",
-    left: 580,
-    top: 300,
-    width: 183,
-    height: 235,
-    alt: "Green insect collage",
-  },
-  {
-    src: "welcome-1.png",
-    left: 237,
-    top: 199,
-    width: 289,
-    height: 389,
-    alt: "Coffee and plant collage",
-  },
-  {
-    src: "welcome-1-1.png",
-    left: 1114,
-    top: 78,
-    width: 164,
-    height: 121,
-    alt: "Brain collage",
-  },
-  {
-    src: "welcome-2.png",
-    left: 524,
-    top: 10,
-    width: 206,
-    height: 245,
-    alt: "Moon collage",
-  },
-  { src: "union.svg", left: 994, top: 874, width: 386, height: 441, alt: "" },
-  {
-    src: "welcome-5.png",
-    left: 967,
-    top: 927,
-    width: 365,
-    height: 440,
-    alt: "Flower research collage",
-  },
-  {
     src: "o-is.png",
-    left: 1044,
-    top: 1603,
+    left: 1290,
+    top: 1620,
     width: 201,
     height: 252,
     alt: "Electronic collage",
   },
   {
     src: "welcome-15.png",
-    left: 981,
-    top: 1447,
+    left: 1180,
+    top: 1450,
     width: 203,
     height: 162,
     alt: "Cat benching a barbell",
   },
   {
-    src: "welcome-17.png",
-    left: 1200,
-    top: 1600,
-    width: 182,
-    height: 257,
-    alt: "Plant collage",
-  },
-  {
     src: "welcome-18.png",
-    left: 1148,
-    top: 1869,
+    left: 330,
+    top: 1850,
     width: 174,
     height: 148,
     alt: "Book collage",
@@ -233,25 +154,41 @@ export default function GalleryPage() {
             <PositionedImage key={artwork.src} artwork={artwork} />
           ))}
           <SecretClippy />
-          <h1 className="absolute top-[199px] left-[808px] w-[572px] font-serif text-[84px] leading-none font-bold">
-            Welcome
-            <br />
-            <span className="pl-[300px]">to my Brain</span>
-          </h1>
+          <div
+            className="border-line bg-surface absolute overflow-hidden rounded-2xl border shadow-[4px_6px_20px_rgba(42,31,14,0.12)]"
+            style={{
+              left: 237,
+              top: 30,
+              width: MIND_MAP_WIDTH,
+              height: MIND_MAP_HEIGHT,
+            }}
+          >
+            <MindMap />
+            <h1 className="text-ink pointer-events-none absolute top-[60px] left-[44px] font-serif text-[72px] leading-none font-bold">
+              Welcome
+              <br />
+              <span className="pl-[120px]">to my Brain</span>
+            </h1>
+          </div>
           <h2 className="absolute top-[792px] left-[277px] font-serif text-[72px] leading-none">
             About me:
           </h2>
-          <p className="absolute top-[924px] left-[277px] z-10 w-[610px] font-sans text-[30px] leading-normal">
-            Hiii I&apos;m Bahar, a Computer Science student at the University of
-            Edinburgh who loves to challenge myself and learn. Between a
-            part-time job, uni, picking up new skills, and whatever side quest
-            I&apos;m on life gets pretty full, so I built this not just to show
-            my work but to track my hobbies and grow new habits. I&apos;ll be
-            updating it often, so if something looks unpolished or unfinished,
-            it&apos;s a learning journey and I hope to continuously improve it.
-            Feel free to wander into the rooms, explore, and have a good time!
+          <p className="absolute top-[924px] left-[277px] z-10 w-[1240px] font-sans text-[30px] leading-normal">
+            Bahar. Computer science at Edinburgh, a part-time job, and a steady
+            supply of side quests. This site is my notebook: the books I&apos;m
+            reading, the things I&apos;m writing, the problems I&apos;m solving.
+            Nothing here is finished, and that&apos;s the point. A mind
+            isn&apos;t a finished thing, it&apos;s one that keeps revising
+            itself, and this is mine, in public.
+            <span className="mt-6 block">
+              The question I keep coming back to is how to optimise my learning
+              and my brain. Part of the answer, I think, is humility and mental
+              grit: I&apos;m terrible at running, and I keep doing it anyway,
+              because being bad at something is how you stay honest. The rest is
+              a flat white, a climbing wall and a good book.
+            </span>
           </p>
-          <section className="absolute top-[1548px] left-[518px] z-10 w-[662px] font-sans text-[30px] leading-normal">
+          <section className="absolute top-[1400px] left-[518px] z-10 w-[662px] font-sans text-[30px] leading-normal">
             <h2 className="font-serif text-[56px]">My interests...</h2>
             <ul className="mt-6 list-disc pl-[60px]">
               <li className="w-fit transition-transform duration-200 focus-within:scale-105 hover:scale-105">
@@ -326,7 +263,7 @@ export default function GalleryPage() {
               </Link>
               <Link
                 href={room.href}
-                className="text-accent-2 pointer-events-auto absolute z-10 block origin-left font-mono text-[30px] leading-normal transition-transform duration-200 ease-out hover:scale-105 focus-visible:scale-105"
+                className="text-ink pointer-events-auto absolute z-10 block origin-left font-mono text-[30px] leading-normal transition-transform duration-200 ease-out hover:scale-105 focus-visible:scale-105"
                 style={{
                   left: room.left - room.imageLeft,
                   top: room.top - room.imageTop,

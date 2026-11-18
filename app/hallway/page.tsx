@@ -40,11 +40,15 @@ export default async function GalleryPage() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://images.unsplash.com/photo-1638294621924-be97f5f92413?w=1200&h=400&fit=crop&auto=format"
-          alt="Pressed leaves and flowers arranged on a surface"
+          src="/figma-home/welcome-5.png"
+          alt="A glowing wireframe carnation on a dark specimen sheet"
           loading="lazy"
-          className="h-full w-full object-cover"
-          style={{ filter: "sepia(28%) saturate(82%) brightness(0.96)" }}
+          className="h-full w-full object-cover object-[50%_26%]"
+          style={{ filter: "sepia(30%) saturate(85%)" }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: "var(--photo-wash)" }}
         />
         <div
           className="absolute inset-0"

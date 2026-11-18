@@ -25,6 +25,9 @@
   --accent-2: #8a4a2a; /* rust, for mono labels */
   --shelf: #c69e66;
   --shelf-edge: #9a7342;
+  /* Room header photos: how they are toned and washed to sit in the theme. */
+  --photo-filter: sepia(28%) saturate(82%) brightness(0.96);
+  --photo-wash: transparent;
 }
 
 /* The sidebar / mobile bar is dark walnut, so the page palette
@@ -540,4 +543,39 @@ body {
   .steam {
     animation: none;
   }
+}
+
+/* ==== Dark espresso theme ===================================================
+   Vintage-terminal coffee and moss: warm near-black browns (never blue-black),
+   parchment-coloured text that is softened rather than white, dusty olive
+   accents and amber mono labels. Text pairs clear WCAG AA on --bg.
+   To go back to the cream theme, delete this block. */
+:root {
+  color-scheme: dark;
+  --bg: #17110c;
+  --bg-2: #261b12;
+  --surface: #211810;
+  --ink: #e3d7bf;
+  --ink-soft: #b0a389;
+  --line: #4d3f2d;
+  --accent: #a9ab84; /* dusty olive-sage, warm enough to sit in the brown */
+  --accent-ink: #17110c;
+  --accent-2: #dba85c; /* amber, for mono labels and the "my brain" neuron */
+  --shelf: #b98d52;
+  --shelf-edge: #8a6a3f;
+  --signal: #8fb9d9; /* cool ice blue so firing signals stand out on brown */
+  /* Bright stock photos would glare on near-black: dim, warm and wash them. */
+  --photo-filter: sepia(70%) saturate(60%) brightness(0.38) contrast(1.1);
+  --photo-wash: rgba(38, 27, 18, 0.5);
+}
+.sidebar-chrome {
+  --bg: #0f0b07;
+  --bg-2: #0a0704;
+  --surface: #3a4430;
+  --ink: #e3d7bf;
+  --ink-soft: #c4c4a6;
+  --line: #5f6849;
+  --accent: #a9ab84;
+  --accent-ink: #0f0b07;
+  --accent-2: #dba85c;
 }
