@@ -20,7 +20,10 @@ function ensureOk(res: Response, failureMessage: string): void {
   if (!res.ok) throw new Error(failureMessage);
 }
 
-function jsonBody(method: "POST" | "PUT" | "PATCH", body: unknown): RequestInit {
+function jsonBody(
+  method: "POST" | "PUT" | "PATCH",
+  body: unknown,
+): RequestInit {
   return {
     method,
     headers: { "Content-Type": "application/json" },
@@ -69,7 +72,9 @@ export function bookFileUrl(id: string): string {
 // --- Annotations ---------------------------------------------------------
 
 export async function fetchAnnotations(bookId: string): Promise<Annotation[]> {
-  return parseJson<Annotation[]>(await fetch(`/api/books/${bookId}/annotations`));
+  return parseJson<Annotation[]>(
+    await fetch(`/api/books/${bookId}/annotations`),
+  );
 }
 
 export async function createAnnotation(

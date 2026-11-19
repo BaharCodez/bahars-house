@@ -19,10 +19,10 @@ export default function SecretClippy() {
         alt="Clippy"
         width={182}
         height={221}
-        className="object-cover transition-transform duration-200 group-hover:scale-105 group-focus-within:scale-105"
+        className="object-cover transition-transform duration-200 group-focus-within:scale-105 group-hover:scale-105"
       />
       <div
-        className={`absolute top-1/2 left-full ml-5 w-[310px] -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-[18px] text-[var(--ink)] shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity ${isDismissed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`}
+        className={`absolute top-1/2 left-full ml-5 w-[310px] -translate-y-1/2 rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4 font-mono text-[18px] text-[var(--ink)] shadow-[4px_6px_20px_rgba(42,31,14,0.12)] transition-opacity ${isDismissed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"}`}
       >
         <p>Do you want to visit the secret room?</p>
         <div className="mt-3 flex gap-3">

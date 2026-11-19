@@ -40,7 +40,10 @@ export function readSelection(
   const rawEnd = sameBlock
     ? offsetIn(startEl, range.endContainer, range.endOffset)
     : blockText.length;
-  const end = Math.min(rawEnd < 0 ? blockText.length : rawEnd, blockText.length);
+  const end = Math.min(
+    rawEnd < 0 ? blockText.length : rawEnd,
+    blockText.length,
+  );
   if (end - start < 2) return undefined;
 
   return {

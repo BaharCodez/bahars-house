@@ -13,6 +13,5 @@ export const FELT_DIFFICULTY: { value: number; tint: string }[] = [
   { value: 5, tint: "hl-got" },
 ];
 
-export const RATING_BUTTON =
-  "rounded-sm px-2 py-0.5 font-mono text-[11px]";
+export const RATING_BUTTON = "rounded-sm px-2 py-0.5 font-mono text-[11px]";
 export const RATING_IDLE = "text-ink-soft hover:text-ink";

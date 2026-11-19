@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import type { SyncedProblem } from "../LeetCodeSync";
-import type {
-  DrillProblem,
-  ProblemEntry,
-  ProblemStatus,
-  Step,
-} from "./types";
+import type { DrillProblem, ProblemEntry, ProblemStatus, Step } from "./types";
 
 const SIGN_IN_TO_TRACK = "Sign in as the owner to track your progress.";
 const SAVE_REFUSED = "Couldn't save that — sign in as the owner.";

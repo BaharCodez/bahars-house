@@ -1,6 +1,7 @@
-// The landing-page mind map. Read-only for now: this file is the whole truth.
-// The shape (ids, labels, edges by id) mirrors what database rows would look
-// like, so owner-only editing can replace this file later without redrawing.
+// The landing-page mind map: shared types and the starter map.
+// The live map is stored in the database (MapNode / MapEdge). Until the owner
+// saves it there, and whenever the database can't be reached, the page falls
+// back to the starter map below, so the landing page always renders.
 
 // Logical size of the map; the landing page canvas scales it with a transform.
 export const MIND_MAP_WIDTH = 1280;
@@ -8,60 +9,86 @@ export const MIND_MAP_HEIGHT = 720;
 
 export type MapNodeKind = "core" | "topic" | "link";
 
+export type MapLink = { label: string; href: string };
+
 export type MapNode = {
   id: string;
   label: string;
   kind: MapNodeKind;
-  /** Where a click goes; topics without a page yet have none. */
-  href?: string;
+  /** The owner's own words about this topic. Plain text. */
+  note: string;
+  /** Where to go from here: rooms, books, posts, any URL. */
+  links: MapLink[];
+  /** Set when the owner has dragged this node and left it there. */
+  pinned: { x: number; y: number } | null;
 };
 
-export type MapEdge = { source: string; target: string };
+export type MapEdge = { id: string; source: string; target: string };
 
-export const MAP_NODES: MapNode[] = [
-  { id: "brain", label: "my brain", kind: "core" },
-  { id: "neuroscience", label: "neuroscience", kind: "topic" },
-  { id: "philosophy", label: "philosophy", kind: "topic" },
-  { id: "books", label: "books", kind: "topic" },
-  { id: "architecture", label: "architecture", kind: "topic" },
-  { id: "cs", label: "computer science", kind: "topic" },
-  { id: "biology", label: "biology", kind: "topic" },
-  { id: "climbing", label: "climbing", kind: "topic" },
-  { id: "astronomy", label: "astronomy", kind: "topic" },
-  // The hobby board's four buckets hang off it; all of them open the board.
-  {
-    id: "hobby-board",
-    label: "hobby board",
-    kind: "topic",
-    href: "/notes/board",
-  },
-  { id: "writing", label: "→ writing room", kind: "link", href: "/notes" },
-  { id: "study", label: "→ study", kind: "link", href: "/study" },
-  { id: "read", label: "read about", kind: "link", href: "/notes/board" },
-  { id: "write", label: "write about", kind: "link", href: "/notes/board" },
-  { id: "explore", label: "explore", kind: "link", href: "/notes/board" },
-  { id: "solve", label: "solve", kind: "link", href: "/notes/board" },
+export type MindMapData = { nodes: MapNode[]; edges: MapEdge[] };
+
+const node = (
+  id: string,
+  label: string,
+  kind: MapNodeKind,
+  links: MapLink[] = [],
+): MapNode => ({ id, label, kind, note: "", links, pinned: null });
+
+const BOARD: MapLink[] = [
+  { label: "Open the hobby board", href: "/notes/board" },
 ];
 
-export const MAP_EDGES: MapEdge[] = [
-  { source: "brain", target: "neuroscience" },
-  { source: "brain", target: "philosophy" },
-  { source: "brain", target: "books" },
-  { source: "brain", target: "architecture" },
-  { source: "brain", target: "cs" },
-  { source: "brain", target: "biology" },
-  { source: "brain", target: "climbing" },
-  { source: "brain", target: "astronomy" },
-  { source: "astronomy", target: "philosophy" },
-  { source: "brain", target: "hobby-board" },
-  { source: "hobby-board", target: "read" },
-  { source: "hobby-board", target: "write" },
-  { source: "hobby-board", target: "explore" },
-  { source: "hobby-board", target: "solve" },
-  { source: "books", target: "read" },
-  { source: "neuroscience", target: "philosophy" },
-  { source: "neuroscience", target: "biology" },
-  { source: "architecture", target: "cs" },
-  { source: "books", target: "writing" },
-  { source: "cs", target: "study" },
+export const STARTER_NODES: MapNode[] = [
+  node("brain", "my brain", "core"),
+  node("neuroscience", "neuroscience", "topic"),
+  node("philosophy", "philosophy", "topic"),
+  node("books", "books", "topic"),
+  node("architecture", "architecture", "topic"),
+  node("cs", "computer science", "topic"),
+  node("biology", "biology", "topic"),
+  node("climbing", "climbing", "topic"),
+  node("astronomy", "astronomy", "topic"),
+  node("hobby-board", "hobby board", "topic", BOARD),
+  node("writing", "writing room", "link", [
+    { label: "Open the writing room", href: "/notes" },
+  ]),
+  node("study", "study", "link", [{ label: "Open the study", href: "/study" }]),
+  node("read", "read about", "link", BOARD),
+  node("write", "write about", "link", BOARD),
+  node("explore", "explore", "link", BOARD),
+  node("solve", "solve", "link", BOARD),
 ];
+
+const PAIRS: [string, string][] = [
+  ["brain", "neuroscience"],
+  ["brain", "philosophy"],
+  ["brain", "books"],
+  ["brain", "architecture"],
+  ["brain", "cs"],
+  ["brain", "biology"],
+  ["brain", "climbing"],
+  ["brain", "astronomy"],
+  ["astronomy", "philosophy"],
+  ["brain", "hobby-board"],
+  ["hobby-board", "read"],
+  ["hobby-board", "write"],
+  ["hobby-board", "explore"],
+  ["hobby-board", "solve"],
+  ["books", "read"],
+  ["neuroscience", "philosophy"],
+  ["neuroscience", "biology"],
+  ["architecture", "cs"],
+  ["books", "writing"],
+  ["cs", "study"],
+];
+
+export const STARTER_EDGES: MapEdge[] = PAIRS.map(([source, target]) => ({
+  id: `${source}-${target}`,
+  source,
+  target,
+}));
+
+export const STARTER_MAP: MindMapData = {
+  nodes: STARTER_NODES,
+  edges: STARTER_EDGES,
+};

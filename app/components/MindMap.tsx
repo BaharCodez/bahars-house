@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   forceCollide,
   forceLink,
@@ -12,18 +12,21 @@ import {
   type SimulationLinkDatum,
   type SimulationNodeDatum,
 } from "d3-force";
+import MindMapPanel from "@/app/components/MindMapPanel";
+import { addNode, patchNode, seedMap } from "@/app/lib/mapApi";
 import {
-  MAP_EDGES,
-  MAP_NODES,
   MIND_MAP_HEIGHT,
   MIND_MAP_WIDTH,
+  type MapEdge,
   type MapNode,
+  type MindMapData,
 } from "@/app/lib/mindMap";
 
 // A neural-network mind map. The topics are neurons with wiggling dendrites;
 // small unlabeled neurons fill out a brain-shaped cloud around them, and
-// signals fire along the connections. Read-only: visitors can drag neurons
-// around (they spring back) and click the link nodes, nothing is saved.
+// signals fire along the connections. Click a neuron to open its panel.
+// Visitors can only look: their drags spring back and nothing is saved. The
+// signed-in owner can also edit nodes, connect them and pin them in place.
 
 const FILLERS = 46;
 const BRAIN_CENTRE = { x: MIND_MAP_WIDTH * 0.56, y: MIND_MAP_HEIGHT * 0.54 };
@@ -74,8 +77,10 @@ function readPalette(el: HTMLElement) {
   };
 }
 
-function build() {
-  const neurons: Neuron[] = MAP_NODES.map((node, i) => ({
+type Positions = Map<string, { x: number; y: number }>;
+
+function build(nodes: MapNode[], edges: MapEdge[], prev: Positions) {
+  const neurons: Neuron[] = nodes.map((node, i) => ({
     node,
     radius: node.kind === "core" ? 17 : node.kind === "link" ? 6 : 11,
     dendrites: Array.from({ length: 9 }, (_, k) => ({
@@ -83,7 +88,31 @@ function build() {
       length: 1.5 + rand(i * 5 + k) * 1.3,
       phase: rand(i + k) * Math.PI * 2,
     })),
+    // Keep a node where it was across edits; pinned ones stay put.
+    ...(node.pinned
+      ? {
+          x: node.pinned.x,
+          y: node.pinned.y,
+          fx: node.pinned.x,
+          fy: node.pinned.y,
+        }
+      : (prev.get(node.id) ?? {})),
   }));
+  // Brand-new nodes start next to whatever they hang off.
+  for (const e of edges) {
+    for (const [a, b] of [
+      [e.source, e.target],
+      [e.target, e.source],
+    ]) {
+      const fresh = neurons.find((n) => n.node?.id === a);
+      const anchor = neurons.find((n) => n.node?.id === b);
+      if (fresh && anchor && fresh.x === undefined && anchor.x !== undefined) {
+        fresh.x = anchor.x + (rand(fresh.node!.label.length) - 0.5) * 60;
+        fresh.y =
+          (anchor.y ?? 0) + (rand(fresh.node!.label.length + 3) - 0.5) * 60;
+      }
+    }
+  }
   const topicCount = neurons.length;
   for (let i = 0; i < FILLERS; i++) {
     neurons.push({
@@ -94,19 +123,23 @@ function build() {
     });
   }
 
-  const index = new Map(MAP_NODES.map((n, i) => [n.id, i]));
-  const axons: Axon[] = MAP_EDGES.map((e, i) => ({
-    source: index.get(e.source)!,
-    target: index.get(e.target)!,
-    hub: true,
-    bend: (rand(i * 9 + 3) - 0.5) * 0.5,
-  }));
+  const index = new Map(nodes.map((n, i) => [n.id, i]));
+  const axons: Axon[] = edges
+    .filter((e) => index.has(e.source) && index.has(e.target))
+    .map((e, i) => ({
+      source: index.get(e.source)!,
+      target: index.get(e.target)!,
+      hub: true,
+      bend: (rand(i * 9 + 3) - 0.5) * 0.5,
+    }));
   // Each filler wires itself to two of the topic neurons, never the link tags.
-  const wireable = MAP_NODES.filter((n) => n.kind !== "link").length;
-  for (let i = 0; i < FILLERS; i++) {
-    const a = Math.floor(rand(i * 11) * wireable);
-    const b = (a + 1 + Math.floor(rand(i * 13) * (wireable - 1))) % wireable;
-    for (const [k, target] of [a, b].entries()) {
+  const wireable = nodes.flatMap((n, i) => (n.kind === "link" ? [] : [i]));
+  for (let i = 0; i < FILLERS && wireable.length > 1; i++) {
+    const a = Math.floor(rand(i * 11) * wireable.length);
+    const b =
+      (a + 1 + Math.floor(rand(i * 13) * (wireable.length - 1))) %
+      wireable.length;
+    for (const [k, target] of [wireable[a], wireable[b]].entries()) {
       axons.push({
         source: topicCount + i,
         target,
@@ -118,13 +151,77 @@ function build() {
   return { neurons, axons };
 }
 
-export default function MindMap() {
+export default function MindMap({
+  data,
+  canEdit,
+  saved,
+}: {
+  data: MindMapData;
+  canEdit: boolean;
+  /** False while the map is only the built-in starter, not yet in the database. */
+  saved: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const router = useRouter();
-  const routerRef = useRef(router);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const positions = useRef<Positions>(new Map());
+
+  // The drawing loop lives inside an effect, so it reads the latest state
+  // through this ref instead of being rebuilt on every click.
+  const live = useRef({
+    selectedId: null as string | null,
+    canEdit,
+    select: setSelectedId,
+    pin: (id: string, x: number, y: number) => {
+      void patchNode(id, { pinned: { x, y } })
+        .then(() => router.refresh())
+        .catch(() => router.refresh());
+    },
+  });
   useEffect(() => {
-    routerRef.current = router;
-  }, [router]);
+    live.current.selectedId = selectedId;
+    live.current.canEdit = canEdit;
+    live.current.pin = (id, x, y) => {
+      void patchNode(id, { pinned: { x, y } })
+        .then(() => router.refresh())
+        .catch(() => router.refresh());
+    };
+  }, [selectedId, canEdit, router]);
+
+  const selected = data.nodes.find((n) => n.id === selectedId) ?? null;
+  const neighbours = selected
+    ? data.edges.flatMap((e) => {
+        const otherId =
+          e.source === selected.id
+            ? e.target
+            : e.target === selected.id
+              ? e.source
+              : null;
+        const other = data.nodes.find((n) => n.id === otherId);
+        return other ? [{ node: other, edgeId: e.id }] : [];
+      })
+    : [];
+  const others = selected
+    ? data.nodes.filter(
+        (n) =>
+          n.id !== selected.id && !neighbours.some((x) => x.node.id === n.id),
+      )
+    : [];
+
+  async function ownerAction(action: () => Promise<unknown>) {
+    setBusy(true);
+    setError("");
+    try {
+      await action();
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -141,7 +238,8 @@ export default function MindMap() {
       "'Courier New'";
 
     const COLORS = readPalette(canvas);
-    const { neurons, axons } = build();
+    const remembered = positions.current;
+    const { neurons, axons } = build(data.nodes, data.edges, remembered);
     const mapped = neurons.filter((n) => n.node);
 
     const simulation = forceSimulation(neurons)
@@ -354,6 +452,15 @@ export default function MindMap() {
             ctx.stroke();
           }
         }
+        if (node.id === live.current.selectedId) {
+          ctx.beginPath();
+          ctx.arc(x, y, n.radius + 7, 0, Math.PI * 2);
+          ctx.strokeStyle = COLORS.hover;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         ctx.beginPath();
         ctx.arc(x, y, n.radius, 0, Math.PI * 2);
         ctx.fillStyle = tag ? COLORS.link : core ? COLORS.core : COLORS.topic;
@@ -397,7 +504,10 @@ export default function MindMap() {
     const onDown = (e: PointerEvent) => {
       const p = toMap(e);
       const hit = nearest(p.x, p.y);
-      if (!hit) return;
+      if (!hit) {
+        live.current.select(null);
+        return;
+      }
       dragging = hit;
       downAt = p;
       moved = 0;
@@ -416,24 +526,31 @@ export default function MindMap() {
         return;
       }
       hover = nearest(p.x, p.y);
-      canvas.style.cursor = hover?.node?.href
-        ? "pointer"
-        : hover
-          ? "grab"
-          : "default";
+      canvas.style.cursor = hover ? "pointer" : "default";
     };
     const onUp = (e: PointerEvent) => {
       if (!dragging) return;
       const released = dragging;
       dragging = null;
-      released.fx = null;
-      released.fy = null;
       simulation.alphaTarget(0);
       if (canvas.hasPointerCapture(e.pointerId)) {
         canvas.releasePointerCapture(e.pointerId);
       }
-      if (moved < 5 && released.node?.href) {
-        routerRef.current.push(released.node.href);
+      const pinned = released.node?.pinned;
+      if (moved < 5) {
+        // A click, not a drag: open the node's panel.
+        released.fx = pinned?.x ?? null;
+        released.fy = pinned?.y ?? null;
+        if (released.node) live.current.select(released.node.id);
+      } else if (live.current.canEdit && released.node) {
+        // The owner drags a node and leaves it there.
+        released.fx = released.x;
+        released.fy = released.y;
+        live.current.pin(released.node.id, released.x ?? 0, released.y ?? 0);
+      } else {
+        // Visitors can't move anything: it springs back.
+        released.fx = pinned?.x ?? null;
+        released.fy = pinned?.y ?? null;
       }
     };
     const onLeave = () => {
@@ -447,6 +564,9 @@ export default function MindMap() {
     canvas.addEventListener("pointerleave", onLeave);
 
     return () => {
+      for (const n of mapped) {
+        if (n.node) remembered.set(n.node.id, { x: n.x ?? 0, y: n.y ?? 0 });
+      }
       cancelAnimationFrame(raf);
       observer.disconnect();
       simulation.stop();
@@ -456,25 +576,84 @@ export default function MindMap() {
       canvas.removeEventListener("pointercancel", onUp);
       canvas.removeEventListener("pointerleave", onLeave);
     };
-  }, []);
+  }, [data]);
 
   return (
-    <>
+    <div
+      className="relative"
+      style={{ width: MIND_MAP_WIDTH, height: MIND_MAP_HEIGHT }}
+    >
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label="A mind map of Bahar's interests: neuroscience, philosophy, books, architecture, computer science, biology and climbing, linking to the writing room and the study."
+        aria-label="A mind map of Bahar's interests. Click a topic to read more about it."
         className="block touch-pan-y"
         style={{ width: MIND_MAP_WIDTH, height: MIND_MAP_HEIGHT }}
       />
-      {/* Keyboard and screen-reader route to the two linked rooms. */}
-      <nav className="sr-only" aria-label="Mind map links">
-        {MAP_NODES.filter((n) => n.href).map((n) => (
-          <a key={n.id} href={n.href}>
-            {n.label.replace("→ ", "")}
-          </a>
+
+      {selected && (
+        <aside
+          aria-label={`About ${selected.label}`}
+          className="border-line bg-surface/95 text-ink absolute top-4 right-4 bottom-4 w-[370px] overflow-y-auto rounded-xl border p-5 font-sans shadow-[4px_6px_20px_rgba(0,0,0,0.25)] backdrop-blur-sm"
+        >
+          <MindMapPanel
+            key={selected.id}
+            node={selected}
+            neighbours={neighbours}
+            others={others}
+            canEdit={canEdit && saved}
+            onSelect={setSelectedId}
+            onChanged={() => router.refresh()}
+          />
+        </aside>
+      )}
+
+      {/* Owner tools. Visitors never get these rendered at all. */}
+      {canEdit && (
+        <div className="absolute bottom-4 left-4 flex max-w-[360px] flex-col gap-2 font-mono text-[13px]">
+          {!saved ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => ownerAction(seedMap)}
+              className="border-line bg-surface text-ink hover:bg-bg-2 rounded-md border px-3 py-2 text-left"
+            >
+              {busy
+                ? "saving…"
+                : "this map isn't saved yet. click to save it so you can edit it"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                ownerAction(async () => {
+                  const core = data.nodes.find((n) => n.kind === "core");
+                  const node = await addNode("new topic", core?.id);
+                  setSelectedId(node.id);
+                })
+              }
+              className="border-line bg-surface text-ink hover:bg-bg-2 rounded-md border px-3 py-2 text-left"
+            >
+              + add a topic
+            </button>
+          )}
+          {error && (
+            <p role="alert" className="text-accent-2 text-[13px]">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Keyboard and screen-reader route to every topic. */}
+      <nav className="sr-only" aria-label="Mind map topics">
+        {data.nodes.map((n) => (
+          <button key={n.id} type="button" onClick={() => setSelectedId(n.id)}>
+            {n.label}
+          </button>
         ))}
       </nav>
-    </>
+    </div>
   );
 }

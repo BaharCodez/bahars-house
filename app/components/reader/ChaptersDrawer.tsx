@@ -25,7 +25,10 @@ export default function ChaptersDrawer({
     >
       <div className="border-line flex items-center justify-between border-b px-4 py-3">
         <span className="font-serif text-sm font-medium">Chapters</span>
-        <button onClick={onClose} className="text-ink hover:text-accent text-sm">
+        <button
+          onClick={onClose}
+          className="text-ink hover:text-accent text-sm"
+        >
           ✕
         </button>
       </div>

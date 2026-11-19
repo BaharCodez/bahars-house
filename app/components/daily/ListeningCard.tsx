@@ -6,7 +6,6 @@ import { DASHED_BUTTON } from "./styles";
 import TickButton from "./TickButton";
 import type { TickControl } from "./types";
 
-
 export default function ListeningCard({
   line,
   understood,

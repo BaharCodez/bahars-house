@@ -3,7 +3,8 @@ import type { Book } from "epubjs";
 type ResponseHandler = (response: unknown, type?: string) => unknown;
 
 const HTML_TYPES = new Set(["html", "htm", "xhtml"]);
-const SELF_CLOSED_RAW_TEXT_TAG = /<(script|style|title|textarea)(\b[^>]*?)\/>/gi;
+const SELF_CLOSED_RAW_TEXT_TAG =
+  /<(script|style|title|textarea)(\b[^>]*?)\/>/gi;
 
 // Some EPUBs ship XHTML content under a `.html` extension with self-closing
 // raw-text tags (e.g. `<script src=".."/>`). That's valid XHTML, but epub.js

@@ -134,6 +134,33 @@ model Idea {
   createdAt DateTime @default(now())
 }
 
+// --- Mind map ------------------------------------------------------------
+
+// A node on the landing-page mind map. Public to read; only the owner edits.
+// Starter nodes use readable slugs as ids ("brain", "books"); new ones get cuids.
+model MapNode {
+  id        String    @id @default(cuid())
+  label     String
+  kind      String    @default("topic") // "core" | "topic" | "link"
+  note      String    @default("")
+  links     Json      @default("[]") // [{ label, href }] — see mapLinkSchema
+  pinnedX   Float? // set when the owner drags a node and leaves it there
+  pinnedY   Float?
+  createdAt DateTime  @default(now())
+  from      MapEdge[] @relation("EdgeFrom")
+  to        MapEdge[] @relation("EdgeTo")
+}
+
+model MapEdge {
+  id       String  @id @default(cuid())
+  sourceId String
+  targetId String
+  source   MapNode @relation("EdgeFrom", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   MapNode @relation("EdgeTo", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+}
+
 // --- Hallway -------------------------------------------------------------
 
 // A frame hanging on the hallway wall: a job, a project, or any achievement

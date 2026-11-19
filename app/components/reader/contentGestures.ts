@@ -87,10 +87,10 @@ function edgeReader(container: HTMLElement): () => EdgeState {
   const scroller =
     (container.querySelector(".epub-container") as HTMLElement) || container;
   return () => ({
-      atTop: scroller.scrollTop <= EDGE_TOLERANCE_PX,
-      atBottom:
-        scroller.scrollTop + scroller.clientHeight >=
-        scroller.scrollHeight - EDGE_TOLERANCE_PX,
+    atTop: scroller.scrollTop <= EDGE_TOLERANCE_PX,
+    atBottom:
+      scroller.scrollTop + scroller.clientHeight >=
+      scroller.scrollHeight - EDGE_TOLERANCE_PX,
   });
 }
 

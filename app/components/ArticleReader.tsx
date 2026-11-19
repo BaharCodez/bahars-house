@@ -51,10 +51,7 @@ export default function ArticleReader({
     () => anchorAll(highlights, blocks),
     [blocks, highlights],
   );
-  const counts = useMemo(
-    () => countByGrasp(highlights),
-    [highlights],
-  );
+  const counts = useMemo(() => countByGrasp(highlights), [highlights]);
 
   function onSelect() {
     const host = bodyRef.current;

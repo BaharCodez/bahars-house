@@ -10,6 +10,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      # A placeholder: CI only generates the Prisma client and builds, it never
+      # connects to a database, so the real URL stays out of GitHub.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

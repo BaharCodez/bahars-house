@@ -193,3 +193,55 @@ export const articleInputSchema = z.union([
     text: z.string().min(1, "Paste the article text first.").max(400_000),
   }),
 ]);
+
+// --- Mind map ---------------------------------------------------------------
+
+// A link on a mind-map node: a site-relative path or a full http(s) URL.
+// Nothing else (no javascript:, data:, protocol-relative //host).
+const mapHrefSchema = z
+  .string()
+  .trim()
+  .min(1, "A link needs somewhere to go.")
+  .max(300)
+  .refine(
+    (href) =>
+      (href.startsWith("/") && !href.startsWith("//")) ||
+      /^https?:\/\/\S+$/i.test(href),
+    "Links must start with / or http(s)://.",
+  );
+
+export const mapLinkSchema = z.object({
+  label: z.string().trim().min(1, "Name the link.").max(60),
+  href: mapHrefSchema,
+});
+
+const mapLabelSchema = z.string().trim().min(1, "Name the node.").max(40);
+const mapIdSchema = z.string().min(1).max(60);
+
+// Adding a node, usually hanging off an existing one.
+export const mapNodeInputSchema = z.object({
+  label: mapLabelSchema,
+  kind: z.enum(["topic", "link"]).default("topic"),
+  parentId: mapIdSchema.optional(),
+});
+
+// Editing a node: words, links, or pinning/unpinning where it hangs.
+export const mapNodePatchSchema = z
+  .object({
+    label: mapLabelSchema.optional(),
+    note: z.string().max(2000).optional(),
+    links: z.array(mapLinkSchema).max(8).optional(),
+    pinned: z
+      .object({
+        x: z.number().min(0).max(5000),
+        y: z.number().min(0).max(5000),
+      })
+      .nullable()
+      .optional(),
+  })
+  .refine(changesSomething, NOTHING_TO_CHANGE);
+
+// Connecting two nodes.
+export const mapEdgeInputSchema = z
+  .object({ sourceId: mapIdSchema, targetId: mapIdSchema })
+  .refine((e) => e.sourceId !== e.targetId, "A node can't connect to itself.");

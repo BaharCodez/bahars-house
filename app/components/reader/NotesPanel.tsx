@@ -4,7 +4,8 @@ import { useState, type ReactNode } from "react";
 import type { Annotation, AnnotationKind } from "@/app/lib/types";
 import { KIND_META, KIND_ORDER } from "./kinds";
 
-const FILTER_CHIP = "rounded-full px-2 py-1 font-mono text-[10px] transition-colors";
+const FILTER_CHIP =
+  "rounded-full px-2 py-1 font-mono text-[10px] transition-colors";
 const IDLE_CHIP = "border-line text-ink hover:bg-bg border";
 
 interface NotesPanelProps {
@@ -77,8 +78,8 @@ export default function NotesPanel({
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {annotations.length === 0 && !composer ? (
           <p className="text-ink-soft text-sm">
-            Select any passage and say what it is — a key idea, a definition,
-            an example, or a question. One tap marks it; the note is optional.
+            Select any passage and say what it is — a key idea, a definition, an
+            example, or a question. One tap marks it; the note is optional.
           </p>
         ) : shownNotes.length === 0 ? (
           <p className="text-ink-soft text-sm italic">
@@ -184,7 +185,9 @@ function NoteListItem({
         {comment && <p className="text-ink mt-2 text-sm">{comment}</p>}
       </button>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-ink-soft text-xs">{mine ? "You" : authorName}</span>
+        <span className="text-ink-soft text-xs">
+          {mine ? "You" : authorName}
+        </span>
         {mine && (
           <div className="flex items-center gap-2">
             <button

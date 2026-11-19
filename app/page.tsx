@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import MindMap from "@/app/components/MindMap";
+import { loadMindMap } from "@/app/lib/mapData";
+import { isOwner } from "@/app/lib/session";
 import { MIND_MAP_HEIGHT, MIND_MAP_WIDTH } from "@/app/lib/mindMap";
 import ResponsiveFigmaCanvas from "@/app/components/ResponsiveFigmaCanvas";
 import SecretClippy from "@/app/components/SecretClippy";
@@ -145,7 +147,13 @@ function PositionedImage({ artwork }: { artwork: Artwork }) {
   );
 }
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  // The map is read from the database (falling back to the starter map), and
+  // only the signed-in owner is handed the editing controls.
+  const [{ saved, ...map }, canEdit] = await Promise.all([
+    loadMindMap(),
+    isOwner(),
+  ]);
   return (
     <div className="figma-home text-ink overflow-x-hidden">
       <ResponsiveFigmaCanvas>
@@ -163,7 +171,7 @@ export default function GalleryPage() {
               height: MIND_MAP_HEIGHT,
             }}
           >
-            <MindMap />
+            <MindMap data={map} canEdit={canEdit} saved={saved} />
             <h1 className="text-ink pointer-events-none absolute top-[60px] left-[44px] font-serif text-[72px] leading-none font-bold">
               Welcome
               <br />

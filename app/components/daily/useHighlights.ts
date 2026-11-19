@@ -30,7 +30,8 @@ export function useHighlights(bookmarkId: string, initial: Highlight[]) {
       hs.map((h) => (h.id === id ? { ...h, ...change } : h)),
     );
     const res = await sendJson(`/api/highlights/${id}`, "PATCH", change);
-    if (!res.ok) setHighlights((hs) => hs.map((h) => (h.id === id ? before : h)));
+    if (!res.ok)
+      setHighlights((hs) => hs.map((h) => (h.id === id ? before : h)));
   }
 
   async function remove(id: string) {

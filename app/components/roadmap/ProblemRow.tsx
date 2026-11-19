@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  FELT_DIFFICULTY,
-  RATING_BUTTON,
-  RATING_IDLE,
-} from "./ratings";
+import { FELT_DIFFICULTY, RATING_BUTTON, RATING_IDLE } from "./ratings";
 import type { DrillProblem, ProblemEntry } from "./types";
 import type { ProblemActions } from "./useRoadmapProgress";
 

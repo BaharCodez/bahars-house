@@ -29,9 +29,7 @@ export function useShelf(initialBookmarks: Bookmark[]) {
       return { ok: false, error: data.error ?? "Couldn't save that." };
     }
     const saved: Bookmark = await res.json();
-    setBookmarks((s) =>
-      s.some((b) => b.id === saved.id) ? s : [saved, ...s],
-    );
+    setBookmarks((s) => (s.some((b) => b.id === saved.id) ? s : [saved, ...s]));
     return { ok: true, bookmark: saved };
   }
 
@@ -39,7 +37,11 @@ export function useShelf(initialBookmarks: Bookmark[]) {
     setBookmarks((s) => s.map((b) => (b.id === id ? { ...b, ...change } : b)));
   }
 
-  async function patch(id: string, change: BookmarkChange, undo: BookmarkChange) {
+  async function patch(
+    id: string,
+    change: BookmarkChange,
+    undo: BookmarkChange,
+  ) {
     applyChange(id, change);
     const res = await sendJson(`/api/bookmarks/${id}`, "PATCH", change);
     if (res.ok) return;

@@ -27,7 +27,10 @@ export default function UploadPage() {
     setLoading(true);
     setError(null);
     try {
-      await saveBookToIDB("current-book", new Blob([await file.arrayBuffer()], { type: file.type }));
+      await saveBookToIDB(
+        "current-book",
+        new Blob([await file.arrayBuffer()], { type: file.type }),
+      );
       router.push("/read");
     } catch {
       const reader = new FileReader();
@@ -48,13 +51,18 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-8">
-      <div className="w-full max-w-md flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-black dark:text-white">Upload a Book</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 p-8 dark:bg-black">
+      <div className="flex w-full max-w-md flex-col gap-6">
+        <h1 className="text-2xl font-bold text-black dark:text-white">
+          Upload a Book
+        </h1>
 
         <div
           onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
           onDragLeave={() => setDragging(false)}
           onDrop={(e) => {
             e.preventDefault();
@@ -67,11 +75,16 @@ export default function UploadPage() {
               : "border-zinc-300 hover:border-zinc-500 dark:border-zinc-700 dark:hover:border-zinc-400"
           }`}
         >
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {file ? (
-              <span className="font-medium text-black dark:text-white">{file.name}</span>
+              <span className="font-medium text-black dark:text-white">
+                {file.name}
+              </span>
             ) : (
-              <>Drag your EPUB here or <span className="underline">click to browse</span></>
+              <>
+                Drag your EPUB here or{" "}
+                <span className="underline">click to browse</span>
+              </>
             )}
           </p>
         </div>
@@ -84,12 +97,12 @@ export default function UploadPage() {
           onChange={(e) => pickFile(e.target.files?.[0])}
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-sm text-red-500">{error}</p>}
 
         <button
           disabled={!file || loading}
           onClick={handleUpload}
-          className="rounded-full bg-black text-white dark:bg-white dark:text-black px-8 py-3 font-medium hover:opacity-80 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          className="rounded-full bg-black px-8 py-3 font-medium text-white transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black"
         >
           {loading ? "Opening…" : "Read Book"}
         </button>

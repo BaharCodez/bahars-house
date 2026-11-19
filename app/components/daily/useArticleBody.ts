@@ -7,7 +7,10 @@ export type PullRequest = { mode: "fetch" } | { mode: "paste"; text: string };
 const PULL_FAILED = "Couldn't pull that one in.";
 
 /** The article's cached body, and pulling it in (again) from the source. */
-export function useArticleBody(bookmarkId: string, initialBlocks: Block[] | null) {
+export function useArticleBody(
+  bookmarkId: string,
+  initialBlocks: Block[] | null,
+) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [pulling, setPulling] = useState(false);
   const [pullError, setPullError] = useState<string | null>(null);

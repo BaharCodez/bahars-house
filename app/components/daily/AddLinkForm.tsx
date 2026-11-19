@@ -2,7 +2,11 @@ import { useState } from "react";
 import type { ShelfState } from "./useShelf";
 
 /** Shelve a link found elsewhere; the title falls back to the URL. */
-export default function AddLinkForm({ onSave }: { onSave: ShelfState["save"] }) {
+export default function AddLinkForm({
+  onSave,
+}: {
+  onSave: ShelfState["save"];
+}) {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +58,9 @@ export default function AddLinkForm({ onSave }: { onSave: ShelfState["save"] }) 
           {adding ? "…" : "add"}
         </button>
       </div>
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      )}
     </form>
   );
 }
