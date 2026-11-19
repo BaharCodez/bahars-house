@@ -214,7 +214,6 @@ routes to either. See [09](09-gotchas.md).
 - `music/cozy-lounge.mp3` — the ambient track
 - `decor/plants/plant-1…8.png`, `decor/plantshelf.png`, `decor/gardener.png`,
   `ShelfWornDrawn.jpeg` — pixel-house art (mostly `plantshop`/den era)
-- `file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg` — create-next-app leftovers
 
 `design-inspo/` is gitignored except its README — reference images only, not app
 assets.

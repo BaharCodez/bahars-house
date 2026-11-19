@@ -182,12 +182,13 @@ export default async function GalleryPage() {
             About me:
           </h2>
           <p className="absolute top-[924px] left-[277px] z-10 w-[1240px] font-sans text-[30px] leading-normal">
-            Bahar. Computer science at Edinburgh, a part-time job, and a steady
-            supply of side quests. This site is my notebook: the books I&apos;m
-            reading, the things I&apos;m writing, the problems I&apos;m solving.
-            Nothing here is finished, and that&apos;s the point. A mind
-            isn&apos;t a finished thing, it&apos;s one that keeps revising
-            itself, and this is mine, in public.
+            I&apos;m Bahar. I study computer science at the University of
+            Edinburgh, and I&apos;m always halfway through some side quest. This
+            site is my notebook: the books I&apos;m reading, the things I&apos;m
+            writing, the problems I&apos;m solving. Nothing here is finished,
+            and that&apos;s the point. A mind isn&apos;t a finished thing,
+            it&apos;s one that keeps revising itself, and this is mine, in
+            public.
             <span className="mt-6 block">
               The question I keep coming back to is how to optimise my learning
               and my brain. Part of the answer, I think, is humility and mental
